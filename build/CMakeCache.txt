@@ -198,7 +198,7 @@ TOOLCHAINCONFIG:FILEPATH=TOOLCHAINCONFIG-NOTFOUND
 USERCONFIG:FILEPATH=USERCONFIG-NOTFOUND
 
 //Path to a file.
-_file_name:FILEPATH=/home/daman/ros_workspace/arl_PCA/src/projection.cpp
+_file_name:FILEPATH=/home/daman/ros_workspace/arl_PCA/src/LQR.cpp
 
 //Value Computed by CMake
 arl_PCA_BINARY_DIR:STATIC=/home/daman/ros_workspace/arl_PCA/build

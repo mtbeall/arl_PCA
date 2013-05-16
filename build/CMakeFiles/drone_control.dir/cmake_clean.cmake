@@ -1,5 +1,5 @@
 FILE(REMOVE_RECURSE
-  "CMakeFiles/drone_control.dir/src/ardrone_controller.o"
+  "CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o"
   "../bin/drone_control.pdb"
   "../bin/drone_control"
 )

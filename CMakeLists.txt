@@ -25,8 +25,10 @@ find_package(Eigen REQUIRED)
 include_directories(${Eigen_INCLUDE_DIRS})
 add_definitions(${Eigen_DEFINITIONS})
 
-rosbuild_add_executable(drone_control src/ardrone_controller.cpp)
+rosbuild_add_executable(drone_control src/manual_ardrone_controller.cpp)
 rosbuild_add_executable(main_func src/projection.cpp)
+rosbuild_add_executable(tf_listener src/tf_listener.cpp)
+rosbuild_add_executable(LQR src/LQR.cpp)
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)

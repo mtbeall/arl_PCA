@@ -46,64 +46,64 @@ include CMakeFiles/drone_control.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/drone_control.dir/flags.make
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: CMakeFiles/drone_control.dir/flags.make
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: ../src/ardrone_controller.cpp
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: ../manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/roslang/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/roscpp/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/std_msgs/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/bullet/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/rosconsole/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/angles/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/rospy/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/rostest/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/roswtf/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/message_filters/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/ros/core/rosbuild/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/roslib/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/pluginlib/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/image_transport/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/share/std_srvs/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/common_rosdeps/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/camera_calibration_parsers/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/manifest.xml
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/msg_gen/generated
-CMakeFiles/drone_control.dir/src/ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/srv_gen/generated
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: CMakeFiles/drone_control.dir/flags.make
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: ../src/manual_ardrone_controller.cpp
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: ../manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/roslang/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/roscpp/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/std_msgs/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/geometry_msgs/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/sensor_msgs/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/bullet/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/rosconsole/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/angles/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/rospy/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/rostest/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/roswtf/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/message_filters/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/ros/core/rosbuild/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/roslib/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/pluginlib/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/image_transport/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/share/std_srvs/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/common_rosdeps/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/camera_calibration_parsers/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/image_common/camera_info_manager/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/manifest.xml
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/msg_gen/generated
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/stacks/geometry/tf/srv_gen/generated
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/msg_gen/generated
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /home/daman/ros_workspace/ardrone_autonomy/srv_gen/generated
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/daman/ros_workspace/arl_PCA/build/CMakeFiles $(CMAKE_PROGRESS_1)
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/drone_control.dir/src/ardrone_controller.o"
-	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/drone_control.dir/src/ardrone_controller.o -c /home/daman/ros_workspace/arl_PCA/src/ardrone_controller.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o"
+	/usr/bin/c++   $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -o CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o -c /home/daman/ros_workspace/arl_PCA/src/manual_ardrone_controller.cpp
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/drone_control.dir/src/ardrone_controller.i"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/daman/ros_workspace/arl_PCA/src/ardrone_controller.cpp > CMakeFiles/drone_control.dir/src/ardrone_controller.i
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/drone_control.dir/src/manual_ardrone_controller.i"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -E /home/daman/ros_workspace/arl_PCA/src/manual_ardrone_controller.cpp > CMakeFiles/drone_control.dir/src/manual_ardrone_controller.i
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/drone_control.dir/src/ardrone_controller.s"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/daman/ros_workspace/arl_PCA/src/ardrone_controller.cpp -o CMakeFiles/drone_control.dir/src/ardrone_controller.s
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/drone_control.dir/src/manual_ardrone_controller.s"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_FLAGS) -DBT_USE_DOUBLE_PRECISION -DBT_EULER_DEFAULT_ZYX -W -Wall -Wno-unused-parameter -fno-strict-aliasing -pthread -S /home/daman/ros_workspace/arl_PCA/src/manual_ardrone_controller.cpp -o CMakeFiles/drone_control.dir/src/manual_ardrone_controller.s
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.o.requires:
-.PHONY : CMakeFiles/drone_control.dir/src/ardrone_controller.o.requires
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.requires:
+.PHONY : CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.requires
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.o.provides: CMakeFiles/drone_control.dir/src/ardrone_controller.o.requires
-	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/ardrone_controller.o.provides.build
-.PHONY : CMakeFiles/drone_control.dir/src/ardrone_controller.o.provides
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.provides: CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.requires
+	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.provides.build
+.PHONY : CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.provides
 
-CMakeFiles/drone_control.dir/src/ardrone_controller.o.provides.build: CMakeFiles/drone_control.dir/src/ardrone_controller.o
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.provides.build: CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o
 
 # Object files for target drone_control
 drone_control_OBJECTS = \
-"CMakeFiles/drone_control.dir/src/ardrone_controller.o"
+"CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o"
 
 # External object files for target drone_control
 drone_control_EXTERNAL_OBJECTS =
 
-../bin/drone_control: CMakeFiles/drone_control.dir/src/ardrone_controller.o
+../bin/drone_control: CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o
 ../bin/drone_control: CMakeFiles/drone_control.dir/build.make
 ../bin/drone_control: CMakeFiles/drone_control.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --red --bold "Linking CXX executable ../bin/drone_control"
@@ -113,7 +113,7 @@ drone_control_EXTERNAL_OBJECTS =
 CMakeFiles/drone_control.dir/build: ../bin/drone_control
 .PHONY : CMakeFiles/drone_control.dir/build
 
-CMakeFiles/drone_control.dir/requires: CMakeFiles/drone_control.dir/src/ardrone_controller.o.requires
+CMakeFiles/drone_control.dir/requires: CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o.requires
 .PHONY : CMakeFiles/drone_control.dir/requires
 
 CMakeFiles/drone_control.dir/clean:

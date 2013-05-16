@@ -4,7 +4,7 @@ SET(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 SET(CMAKE_DEPENDS_CHECK_CXX
-  "/home/daman/ros_workspace/arl_PCA/src/manual_ardrone_controller.cpp" "/home/daman/ros_workspace/arl_PCA/build/CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o"
+  "/home/daman/ros_workspace/arl_PCA/src/LQR.cpp" "/home/daman/ros_workspace/arl_PCA/build/CMakeFiles/LQR.dir/src/LQR.o"
   )
 SET(CMAKE_CXX_COMPILER_ID "GNU")
 

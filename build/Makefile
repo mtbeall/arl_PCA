@@ -96,6 +96,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named LQR
+
+# Build rule for target.
+LQR: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 LQR
+.PHONY : LQR
+
+# fast build rule for target.
+LQR/fast:
+	$(MAKE) -f CMakeFiles/LQR.dir/build.make CMakeFiles/LQR.dir/build
+.PHONY : LQR/fast
+
+#=============================================================================
 # Target rules for targets named ROSBUILD_genmsg_cpp
 
 # Build rule for target.
@@ -316,20 +329,48 @@ tests/fast:
 	$(MAKE) -f CMakeFiles/tests.dir/build.make CMakeFiles/tests.dir/build
 .PHONY : tests/fast
 
+#=============================================================================
+# Target rules for targets named tf_listener
+
+# Build rule for target.
+tf_listener: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 tf_listener
+.PHONY : tf_listener
+
+# fast build rule for target.
+tf_listener/fast:
+	$(MAKE) -f CMakeFiles/tf_listener.dir/build.make CMakeFiles/tf_listener.dir/build
+.PHONY : tf_listener/fast
+
 # target to build an object file
-src/ardrone_controller.o:
-	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/ardrone_controller.o
-.PHONY : src/ardrone_controller.o
+src/LQR.o:
+	$(MAKE) -f CMakeFiles/LQR.dir/build.make CMakeFiles/LQR.dir/src/LQR.o
+.PHONY : src/LQR.o
 
 # target to preprocess a source file
-src/ardrone_controller.i:
-	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/ardrone_controller.i
-.PHONY : src/ardrone_controller.i
+src/LQR.i:
+	$(MAKE) -f CMakeFiles/LQR.dir/build.make CMakeFiles/LQR.dir/src/LQR.i
+.PHONY : src/LQR.i
 
 # target to generate assembly for a file
-src/ardrone_controller.s:
-	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/ardrone_controller.s
-.PHONY : src/ardrone_controller.s
+src/LQR.s:
+	$(MAKE) -f CMakeFiles/LQR.dir/build.make CMakeFiles/LQR.dir/src/LQR.s
+.PHONY : src/LQR.s
+
+# target to build an object file
+src/manual_ardrone_controller.o:
+	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o
+.PHONY : src/manual_ardrone_controller.o
+
+# target to preprocess a source file
+src/manual_ardrone_controller.i:
+	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/manual_ardrone_controller.i
+.PHONY : src/manual_ardrone_controller.i
+
+# target to generate assembly for a file
+src/manual_ardrone_controller.s:
+	$(MAKE) -f CMakeFiles/drone_control.dir/build.make CMakeFiles/drone_control.dir/src/manual_ardrone_controller.s
+.PHONY : src/manual_ardrone_controller.s
 
 # target to build an object file
 src/projection.o:
@@ -346,12 +387,28 @@ src/projection.s:
 	$(MAKE) -f CMakeFiles/main_func.dir/build.make CMakeFiles/main_func.dir/src/projection.s
 .PHONY : src/projection.s
 
+# target to build an object file
+src/tf_listener.o:
+	$(MAKE) -f CMakeFiles/tf_listener.dir/build.make CMakeFiles/tf_listener.dir/src/tf_listener.o
+.PHONY : src/tf_listener.o
+
+# target to preprocess a source file
+src/tf_listener.i:
+	$(MAKE) -f CMakeFiles/tf_listener.dir/build.make CMakeFiles/tf_listener.dir/src/tf_listener.i
+.PHONY : src/tf_listener.i
+
+# target to generate assembly for a file
+src/tf_listener.s:
+	$(MAKE) -f CMakeFiles/tf_listener.dir/build.make CMakeFiles/tf_listener.dir/src/tf_listener.s
+.PHONY : src/tf_listener.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
 	@echo "... all (the default if no target is provided)"
 	@echo "... clean"
 	@echo "... depend"
+	@echo "... LQR"
 	@echo "... ROSBUILD_genmsg_cpp"
 	@echo "... ROSBUILD_genmsg_lisp"
 	@echo "... ROSBUILD_gensrv_cpp"
@@ -371,12 +428,19 @@ help:
 	@echo "... test-results"
 	@echo "... test-results-run"
 	@echo "... tests"
-	@echo "... src/ardrone_controller.o"
-	@echo "... src/ardrone_controller.i"
-	@echo "... src/ardrone_controller.s"
+	@echo "... tf_listener"
+	@echo "... src/LQR.o"
+	@echo "... src/LQR.i"
+	@echo "... src/LQR.s"
+	@echo "... src/manual_ardrone_controller.o"
+	@echo "... src/manual_ardrone_controller.i"
+	@echo "... src/manual_ardrone_controller.s"
 	@echo "... src/projection.o"
 	@echo "... src/projection.i"
 	@echo "... src/projection.s"
+	@echo "... src/tf_listener.o"
+	@echo "... src/tf_listener.i"
+	@echo "... src/tf_listener.s"
 .PHONY : help
 
 
