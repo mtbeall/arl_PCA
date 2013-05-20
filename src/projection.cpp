@@ -5,20 +5,11 @@
     This node takes in a desired position (from joystick or trajectory generator) and outputs a new, SAFE desired position.  
 */
 
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-
 
 // Includes
 #include <ros/ros.h>
 #include <geometry_msgs/Vector3.h>
 #include <Eigen/Dense>
-
-
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
 
 
 // Global variables for use in program
@@ -108,11 +99,6 @@ void read_pcurr(const geometry_msgs::Vector3& pcurr_in)
 }
 
 
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-
-
 // Pre-declarations
 double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
 Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane);
@@ -122,12 +108,7 @@ geometry_msgs::Vector3 solveProjection(const geometry_msgs::Vector3& pcurr, cons
 void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs);
 void buildObstacles(std::vector<obstacle>& full_obs_list);
 
-
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-
-
+// Main
 int main(int argc, char** argv)
 {
     // ROS Initialization
@@ -170,12 +151,7 @@ int main(int argc, char** argv)
 }
 
 
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------------------------
-
-
-// function to find dot product
+// function to find dot product of two geometry_msgs::Vector3's
 double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
 {
     return A.x*B.x + A.y*B.y + A.z*B.z;
@@ -195,6 +171,7 @@ void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::V
 }
 
 
+// Solve for what point a line intersects at
 Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane)
 {
     Eigen::Matrix3f A;
@@ -228,6 +205,8 @@ bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
     return false;
 }
 
+
+// Projects a point onto a given plane through it's normal vector
 geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane)
 {
     geometry_msgs::Vector3 p0;
@@ -238,6 +217,8 @@ geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const o
 }
 
 
+// Solves the iterative projection by projecting onto nearest and seeing if there is another intersection
+// If there is, project again. Do so until safe
 geometry_msgs::Vector3 solveProjection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs)
 {
     geometry_msgs::Vector3 pdes_new;    
@@ -265,7 +246,7 @@ geometry_msgs::Vector3 solveProjection(const geometry_msgs::Vector3& pcurr, cons
             }
         }
         see_obs[min_dist_index].flag = false;           // Update flag so same plane isn't checked again
-        pdes_new = projectOntoPlane(pdes_new,see_obs[min_dist_index]) + 0.001*see_obs[min_dist_index].normal; // Update pdes
+        pdes_new = projectOntoPlane(pdes_new,see_obs[min_dist_index]) + 0.1*see_obs[min_dist_index].normal; // Update pdes
         if(checkIntersection(pcurr,pdes_new,see_obs) == false)  // Check if new pdes intersect another see-able obstacle
             break;                                              // If no, break from while, else continue on to project again
     }

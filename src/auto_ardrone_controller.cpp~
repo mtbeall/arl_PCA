@@ -14,11 +14,12 @@ Derived from code from Parker Conroy.
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
+#include <std_msgs/Float32.h>
 
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
 double joy_x,joy_y,joy_z,joy_yaw;
-int joy_a_,joy_b_,joy_xbox_;
-int joy_a,joy_b,joy_xbox;
+int joy_a_,joy_b_,joy_xbox_,joy_x_button_;
+int joy_a,joy_b,joy_xbox,joy_x_button;
 
 float drone_batt = 100.0;
 int drone_state = 0; 
@@ -26,14 +27,23 @@ int drone_state = 0;
 
 std_msgs::Empty emp_msg;
 geometry_msgs::Vector3 pdes;
-Eigen::VectorXf u;
+geometry_msgs::Vector3 u;
 geometry_msgs::Twist cmd_out;
+std_msgs::Float32 yaw;
+
 
 void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 {
 	drone_state=msg_in.state;	
 	drone_batt=msg_in.batteryPercent;
 }
+
+
+void mocap_callback(const std_msgs::Float32& yaw_in)
+{
+    yaw = yaw_in;
+}
+
 
 void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 {
@@ -45,27 +55,33 @@ void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 	joy_a_=joy_msg_in.buttons[0]; //a button
 	joy_b_=joy_msg_in.buttons[1]; //b button
 	joy_xbox_=joy_msg_in.buttons[8]; //xbox button
+    joy_x_button_ = joy_msg_in.buttons[2]; // x button
 }	
 
-void merge_new_mgs(void){
-		joy_x=joy_x_;
-		joy_y=joy_y_;
-		joy_z=joy_z_;
-		joy_yaw=joy_yaw_;
-		joy_a=joy_a_;
-		joy_b=joy_b_;
-		joy_xbox=joy_xbox_;
+
+void merge_new_mgs(void)
+{
+	joy_x=joy_x_;
+	joy_y=joy_y_;
+	joy_z=joy_z_;
+	joy_yaw=joy_yaw_;
+	joy_a=joy_a_;
+	joy_b=joy_b_;
+	joy_xbox=joy_xbox_;
+    joy_x_button = joy_x_button_;
 }
 
-void LQR_callback(const Eigen::VectorXf& u_in)
+
+void LQR_callback(const geometry_msgs::Vector3& u_in)
 {
-    u(0) = u_in(0);
-    u(1) = u_in(1);
-    u(2) = u_in(2);
-    u(3) = u_in(3);
+    u.x = u_in.x;
+    u.y = u_in.y;
+    u.z = u_in.z;
 }
+
 
 double K = 1.0; // P-gain for yaw.
+
 
 int main(int argc, char** argv)
 {
@@ -78,6 +94,7 @@ int main(int argc, char** argv)
     ros::Subscriber u_sub;
 	ros::Subscriber nav_sub;
 	ros::Subscriber joy_sub;
+    ros::Subscriber yaw_sub;
     ros::Publisher  pdes__pub;
 	ros::Publisher  pub_empty_reset;
 	ros::Publisher  pub_empty_land;
@@ -87,6 +104,7 @@ int main(int argc, char** argv)
     joy_sub = node.subscribe("joy", 1, joy_callback);
     nav_sub = node.subscribe("ardrone/navdata", 1, nav_callback);
     u_sub = node.subscribe("LQR_u",1,LQR_callback);
+    yaw_sub = node.subscribe("current_yaw",1,mocap_callback);
 
     pdes_pub = node.advertise<geometry_msgs::Vector3>("desired_position",1);
 	pub_empty_reset = node.advertise<std_msgs::Empty>("ardrone/reset", 1);
@@ -94,6 +112,7 @@ int main(int argc, char** argv)
 	pub_empty_land = node.advertise<std_msgs::Empty>("ardrone/land", 1);
     pub_twist = node.advertise<geometry_msgs::Twist>("cmd_vel",1);
 
+    
     ROS_INFO("Starting AR-Drone Controller");
  	while (ros::ok()) 
     {
@@ -137,25 +156,25 @@ int main(int argc, char** argv)
 				}
 			}
 		}
-
-        // NEED TO ADD ONE MORE BUTTON WHICH INITIATES THE TRAJECTORY
-        // WHILE TRAJECTORY IS GOING SHOULD GO THROUGH THE FOLLOWING CODE
-        while (drone_state == 3)
+        if (joy_x_button) // If Button X is pressed, fly across space
         {
-            // Set pdes, maybe tie several world position to several joystick positions.
-            pdes.x = 0;
-            pdes.y = 0;
-            pdes.z = 1;
-            pdes_pub.publish(pdes);
-            cmd_out.linear.x  = u(0);
-            cmd_out.linear.y  = u(1);
-            cmd_out.linear.z  = u(2);
-            cmd_out.angular.z = -1*K*drone_state.rotZ;
-            pub_twist.publish(cmd_out);
+            while (drone_state == 3)
+            {
+                // Set pdes, maybe tie several world position to several joystick positions.
+                pdes.x = 0;
+                pdes.y = 0;
+                pdes.z = 1;
+                pdes_pub.publish(pdes);
+                cmd_out.linear.x  = u.x;
+                cmd_out.linear.y  = u.y;
+                cmd_out.linear.z  = u.z;
+                cmd_out.angular.z = -1*K*yaw;       // CANNOT DO THE * OPERATOR WITH YAW. MUST FIX.
+                pub_twist.publish(cmd_out);
 
-            ros::spinOnce();
-            loop_rate.sleep();
-            // One thing that could be an issue, the received control input will be for the LQR_output of a previous cycle with an old pdes. should be close enough to be equal though. given small velocities and fast-time steps.
+                ros::spinOnce();
+                loop_rate.sleep();
+                // One thing that could be an issue, the received control input will be for the LQR_output of a previous cycle with an old pdes. should be close enough to be equal though. given small velocities and fast-time steps.
+            }
         }
     }
 }

@@ -12,17 +12,27 @@ Derived from code from Parker Conroy.
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/Vector3.h>
 #include <ardrone_autonomy/Navdata.h>
-	
+#include <Eigen/Dense>
+#include <std_msgs/Float32.h>
+
 double max_speed = 1.0; //[m/s]
 double max_speed_yaw= 1.0;
 double des_altd= 1.0;
+
+geometry_msgs::Vector3 pcurr;
+geometry_msgs::Vector3 pdes;
+geometry_msgs::Vector3 u;
+double Kx = 1.0; 
+double Ky = 1.0; 
+double Kz = 1.0; 
+double K  = 1.0;
+std_msgs::Float32 yaw;
 
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
 double joy_x,joy_y,joy_z,joy_yaw;
 int joy_a_,joy_b_,joy_xbox_;
 int joy_a,joy_b,joy_xbox;
 double cmd_x,cmd_y,cmd_z, cmd_yaw;
-//int new_msg=0;
 int drone_state =0; 
 float drone_batt =100.0;
 
@@ -44,34 +54,37 @@ void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 	joy_xbox_=joy_msg_in.buttons[8]; //xbox button
 }	
 
+
 void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 {
 	drone_state=msg_in.state;	
 	drone_batt=msg_in.batteryPercent;
 }
 
-void merge_new_mgs(void){
-		joy_x=joy_x_;
-		joy_y=joy_y_;
-		joy_z=joy_z_;
-		joy_yaw=joy_yaw_;
-		joy_a=joy_a_;
-		joy_b=joy_b_;
-		joy_xbox=joy_xbox_;
+
+void mocap_callback(const std_msgs::Float32& yaw_in)
+{
+    yaw = yaw_in;
 }
 
-geometry_msgs::Vector3 pcurr;
-geometry_msgs::Vector3 pdes;
-Eigen::VectorXf u;
-double Kx,Ky,Kz,K;
-Kx = 1.0; Ky = 1.0; Kz = 1.0; K = 1.0;
 
-void u_callback(const Eigen::Vector3& u_in)
+void merge_new_mgs(void)
 {
-    u(0) = u_in(0);
-    u(1) = u_in(1);
-    u(2) = u_in(2);
-    u(3) = u_in(3);
+	joy_x=joy_x_;
+	joy_y=joy_y_;
+	joy_z=joy_z_;
+	joy_yaw=joy_yaw_;
+	joy_a=joy_a_;
+	joy_b=joy_b_;
+	joy_xbox=joy_xbox_;
+}
+
+
+void u_callback(const geometry_msgs::Vector3& u_in)
+{
+    u.x = u_in.x;
+    u.y = u_in.y;
+    u.z = u_in.z;
 }
 
 void pos_callback(const geometry_msgs::Vector3& pcurr_in)
@@ -92,16 +105,18 @@ int main(int argc, char** argv)
 	ros::Publisher pub_empty_takeoff;
 	ros::Publisher pub_twist;
 	ros::Publisher pub_v3;
-    ros::Publisher pdes_pub
+    ros::Publisher pdes_pub;
 	ros::Subscriber joy_sub;
 	ros::Subscriber nav_sub;
     ros::Subscriber pcurr_sub;
     ros::Subscriber u_sub;
+    ros::Subscriber yaw_sub;
 
-    pcurr_sub = node.subscripe("current_position",1,pos_callback);
+    pcurr_sub = node.subscribe("current_position",1,pos_callback);
 	joy_sub = node.subscribe("joy", 1, joy_callback);
 	nav_sub = node.subscribe("ardrone/navdata", 1, nav_callback);
     u_sub = node.subscribe("LQR_u", 1, u_callback);
+    yaw_sub = node.subscribe("current_yaw",1,mocap_callback);
 
     pdes_pub = node.advertise<geometry_msgs::Vector3>("desired_position",1);
 	pub_twist=node.advertise<geometry_msgs::Twist>("joy_vel_twist", 1); 
@@ -162,10 +177,10 @@ int main(int argc, char** argv)
         pdes_pub.publish(pdes);
 		
 		geometry_msgs::Twist twist_msg;
-		twist_msg.linear.x= u(0);
-		twist_msg.linear.y= u(1);
-		twist_msg.linear.z= u(2);
-		twist_msg.angular.z= -1.0*K*drone_state.rotZ;
+		twist_msg.linear.x= u.x;
+		twist_msg.linear.y= u.y;
+		twist_msg.linear.z= u.z;
+		twist_msg.angular.z= -1.0*K*yaw;   // CANNOT DO THE * OPERATOR WITH YAW. MUST FIX.
 
 		pub_twist.publish(twist_msg);
 		
