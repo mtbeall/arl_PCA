@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(50);
     while(ros::ok())
     {
+        //listener.waitForTransform("/quad", "/optitrak", ros::Time(0),ros::Duration(0.5));
         listener.lookupTransform("/quad", "/optitrak",  ros::Time(0), stamped);
         pcurr.x = stamped.getOrigin().getX();
         pcurr.y = stamped.getOrigin().getY();

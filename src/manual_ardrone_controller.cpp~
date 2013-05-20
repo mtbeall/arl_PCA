@@ -101,7 +101,6 @@ int main(int argc, char** argv)
     pcurr_sub = node.subscripe("current_position",1,pos_callback);
 	joy_sub = node.subscribe("joy", 1, joy_callback);
 	nav_sub = node.subscribe("ardrone/navdata", 1, nav_callback);
-    u_sub = node.subscribe("LQR_u", 1, u_callback);
 
     pdes_pub = node.advertise<geometry_msgs::Vector3>("desired_position",1);
 	pub_twist=node.advertise<geometry_msgs::Twist>("joy_vel_twist", 1); 
