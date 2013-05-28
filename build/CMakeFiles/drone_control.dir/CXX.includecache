@@ -45,6 +45,8 @@ ardrone_autonomy/Navdata.h
 -
 Eigen/Dense
 -
+std_msgs/Float32.h
+-
 
 /opt/ros/fuerte/include/XmlRpcDecl.h
 ros/macros.h
@@ -711,6 +713,22 @@ std_msgs/Header.h
 -
 
 /opt/ros/fuerte/include/std_msgs/Empty.h
+string
+-
+vector
+-
+map
+-
+ros/types.h
+-
+ros/serialization.h
+-
+ros/builtin_message_traits.h
+-
+ros/message_operations.h
+-
+
+/opt/ros/fuerte/include/std_msgs/Float32.h
 string
 -
 vector

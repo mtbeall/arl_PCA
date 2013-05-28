@@ -11,12 +11,12 @@
 #include <Eigen/Dense>
 #include <geometry_msgs/Vector3.h>
 #include <std_msgs/Float32.h>
-//#include <Eigen/Transpose.h>
 
 
 #define x_dim 6
 #define u_dim 3
 #define p_dim 3
+
 
 geometry_msgs::Vector3 u_out;
 Eigen::VectorXf u(u_dim);      		// Control Input 
@@ -40,12 +40,16 @@ void read_pcurr(const geometry_msgs::Vector3& pcurr_in)
     pcurr.y = pcurr_in.y;
     pcurr.z = pcurr_in.z;
 }
+
+
 void read_vcurr(const geometry_msgs::Vector3& vcurr_in)
 {
     vcurr.x = vcurr_in.x;
     vcurr.y = vcurr_in.y;
     vcurr.z = vcurr_in.z;
 }
+
+
 void read_pdes(const geometry_msgs::Vector3& pdes_in)
 {
     pdes.x = pdes_in.x;

@@ -6,6 +6,7 @@ This node takes in joystick messages related to position and outputs the proper 
 Derived from code from Parker Conroy.
 */
 
+
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
 #include <geometry_msgs/Twist.h>
@@ -15,9 +16,11 @@ Derived from code from Parker Conroy.
 #include <Eigen/Dense>
 #include <std_msgs/Float32.h>
 
+
 double max_speed = 1.0; //[m/s]
 double max_speed_yaw= 1.0;
 double des_altd= 1.0;
+
 
 geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 pdes;
@@ -26,8 +29,8 @@ double Kx = 1.0;
 double Ky = 1.0; 
 double Kz = 1.0; 
 double K  = 1.0;
-std_msgs::Float32 yaw;
-
+std_msgs::Float32 yaw_dummy;
+double yaw;
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
 double joy_x,joy_y,joy_z,joy_yaw;
 int joy_a_,joy_b_,joy_xbox_;
@@ -35,12 +38,13 @@ int joy_a,joy_b,joy_xbox;
 double cmd_x,cmd_y,cmd_z, cmd_yaw;
 int drone_state =0; 
 float drone_batt =100.0;
-
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
+
 
 std_msgs::Empty emp_msg;
 geometry_msgs::Vector3 v3_msg; //[x, y,z]
 sensor_msgs::Joy joy_msg_in;
+
 	
 void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 {
@@ -64,7 +68,8 @@ void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 
 void mocap_callback(const std_msgs::Float32& yaw_in)
 {
-    yaw = yaw_in;
+    //yaw_dummy = yaw_in;
+    yaw = yaw_in.data;
 }
 
 
@@ -87,12 +92,14 @@ void u_callback(const geometry_msgs::Vector3& u_in)
     u.z = u_in.z;
 }
 
+
 void pos_callback(const geometry_msgs::Vector3& pcurr_in)
 {
     pcurr.x = pcurr_in.x;
     pcurr.y = pcurr_in.y;
     pcurr.z = pcurr_in.z;
 }
+
 
 int main(int argc, char** argv)
 {
@@ -180,6 +187,7 @@ int main(int argc, char** argv)
 		twist_msg.linear.x= u.x;
 		twist_msg.linear.y= u.y;
 		twist_msg.linear.z= u.z;
+        //yaw = (double) yaw_dummy;
 		twist_msg.angular.z= -1.0*K*yaw;   // CANNOT DO THE * OPERATOR WITH YAW. MUST FIX.
 
 		pub_twist.publish(twist_msg);
@@ -188,5 +196,5 @@ int main(int argc, char** argv)
 		loop_rate.sleep();
 		}//ros::ok
         // Could have same issue as before where the control input is a function of the previous desired position based on the spinOnce timing().
-ROS_ERROR("AR_Drone_Controller has exited");
+        ROS_ERROR("AR_Drone_Controller has exited");
 }//main

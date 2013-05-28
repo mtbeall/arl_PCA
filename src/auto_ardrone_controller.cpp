@@ -6,7 +6,6 @@ This node generates a trajectory of goal positions and sends the necessary contr
 Derived from code from Parker Conroy.
 */
 
-// THIS NEEDS TO BE UPDATED TO INCLUDE THE DYNAMICS MODEL OF GIVING A GOAL POSITION AND OUTPUTTING A CONTROL INPUT. CAN USE LQR ABOUT NEW DYNAMICS MODEL GIVEN A GENERATED TRAJECTORY AND SENDS IT TO THE ROBOT COMMANDS.
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -16,20 +15,22 @@ Derived from code from Parker Conroy.
 #include <ardrone_autonomy/Navdata.h>
 #include <std_msgs/Float32.h>
 
+
 double joy_x_,joy_y_,joy_z_,joy_yaw_;
 double joy_x,joy_y,joy_z,joy_yaw;
 int joy_a_,joy_b_,joy_xbox_,joy_x_button_;
 int joy_a,joy_b,joy_xbox,joy_x_button;
-
 float drone_batt = 100.0;
 int drone_state = 0; 
 // state: {0 is failure, 2 is landed, 3 is flying, 4 is hovering, 6 taking off, 8 landing}
+
 
 std_msgs::Empty emp_msg;
 geometry_msgs::Vector3 pdes;
 geometry_msgs::Vector3 u;
 geometry_msgs::Twist cmd_out;
-std_msgs::Float32 yaw;
+std_msgs::Float32 yaw_dummy;
+double yaw;
 
 
 void nav_callback(const ardrone_autonomy::Navdata& msg_in)
@@ -41,7 +42,7 @@ void nav_callback(const ardrone_autonomy::Navdata& msg_in)
 
 void mocap_callback(const std_msgs::Float32& yaw_in)
 {
-    yaw = yaw_in;
+    yaw = yaw_in.data;
 }
 
 
@@ -168,6 +169,7 @@ int main(int argc, char** argv)
                 cmd_out.linear.x  = u.x;
                 cmd_out.linear.y  = u.y;
                 cmd_out.linear.z  = u.z;
+                //yaw = (double) yaw_dummy;
                 cmd_out.angular.z = -1*K*yaw;       // CANNOT DO THE * OPERATOR WITH YAW. MUST FIX.
                 pub_twist.publish(cmd_out);
 

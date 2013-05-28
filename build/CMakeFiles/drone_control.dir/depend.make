@@ -61,6 +61,7 @@ CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/in
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/include/rosconsole/macros_generated.h
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/include/sensor_msgs/Joy.h
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/include/std_msgs/Empty.h
+CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/include/std_msgs/Float32.h
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /opt/ros/fuerte/include/std_msgs/Header.h
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /usr/local/include/eigen3/Eigen/Cholesky
 CMakeFiles/drone_control.dir/src/manual_ardrone_controller.o: /usr/local/include/eigen3/Eigen/Core

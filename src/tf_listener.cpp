@@ -7,6 +7,7 @@
 
 */
 
+
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/Vector3.h>
@@ -14,12 +15,15 @@
 #include "ros/time.h"
 #include <std_msgs/Float32.h>
 
+
 #define yaw 0
 #define pitch 1
 #define roll 2
 #define thrust 3
 
+
 geometry_msgs::Vector3 pcurr;
+
 
 int main(int argc, char** argv)
 {
@@ -30,7 +34,6 @@ int main(int argc, char** argv)
     ros::Publisher yaw_pub = node.advertise<std_msgs::Float32>("current_yaw",1);
     tf::TransformListener listener;
     tf::StampedTransform stamped;
-
 
     ros::Rate loop_rate(50);
     while(ros::ok())

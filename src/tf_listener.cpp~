@@ -7,6 +7,7 @@
 
 */
 
+
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <geometry_msgs/Vector3.h>
@@ -14,12 +15,15 @@
 #include "ros/time.h"
 #include <std_msgs/Float32.h>
 
+
 #define yaw 0
 #define pitch 1
 #define roll 2
 #define thrust 3
 
+
 geometry_msgs::Vector3 pcurr;
+
 
 int main(int argc, char** argv)
 {
