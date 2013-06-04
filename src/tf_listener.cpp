@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(50);
     while(ros::ok())
     {
-        listener.lookupTransform("/quad", "/optitrak",  ros::Time(0), stamped);
+        listener.lookupTransform("/optitrak", "/quad",  ros::Time(0), stamped);
         pcurr.x = stamped.getOrigin().getX();
         pcurr.y = stamped.getOrigin().getY();
         pcurr.z = stamped.getOrigin().getZ();
@@ -48,6 +48,9 @@ int main(int argc, char** argv)
         //yaw_pub.publish(euler_angles[yaw]);
         ros::spinOnce();
         loop_rate.sleep();
+
+        // Needs to have velocity published
+        // Need yaw about global Z not local Z. mocap sends out euler RPY (I think) - Daman
     }
 }
 
