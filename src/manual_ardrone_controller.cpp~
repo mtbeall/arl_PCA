@@ -70,6 +70,7 @@ void mocap_callback(const std_msgs::Float32& yaw_in)
 {
     //yaw_dummy = yaw_in;
     yaw = yaw_in.data;
+    // Needs updated to also bring in the position.
 }
 
 
@@ -100,6 +101,7 @@ void pos_callback(const geometry_msgs::Vector3& pcurr_in)
     pcurr.z = pcurr_in.z;
 }
 
+// make a function to do find u and find pdes
 
 int main(int argc, char** argv)
 {
@@ -118,6 +120,8 @@ int main(int argc, char** argv)
     ros::Subscriber pcurr_sub;
     ros::Subscriber u_sub;
     ros::Subscriber yaw_sub;
+    // Add velocity
+
 
     pcurr_sub = node.subscribe("current_position",1,pos_callback);
 	joy_sub = node.subscribe("joy", 1, joy_callback);
@@ -196,5 +200,5 @@ int main(int argc, char** argv)
 		loop_rate.sleep();
 		}//ros::ok
         // Could have same issue as before where the control input is a function of the previous desired position based on the spinOnce timing().
-        ROS_ERROR("AR_Drone_Controller has exited");
+    ROS_ERROR("AR_Drone_Controller has exited");
 }//main

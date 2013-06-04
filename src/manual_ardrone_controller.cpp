@@ -70,6 +70,7 @@ void mocap_callback(const std_msgs::Float32& yaw_in)
 {
     //yaw_dummy = yaw_in;
     yaw = yaw_in.data;
+    // Needs updated to also bring in the position.
 }
 
 
@@ -118,6 +119,8 @@ int main(int argc, char** argv)
     ros::Subscriber pcurr_sub;
     ros::Subscriber u_sub;
     ros::Subscriber yaw_sub;
+    // Add velocity
+
 
     pcurr_sub = node.subscribe("current_position",1,pos_callback);
 	joy_sub = node.subscribe("joy", 1, joy_callback);

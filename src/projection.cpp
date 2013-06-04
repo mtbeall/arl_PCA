@@ -18,6 +18,12 @@ geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 pdes_new;
 
 
+
+// Make a function to find pdes from u and find u from a new pdes.
+// Need to subscribe to old u and publish new u
+// Need to code in the dynamics
+
+
 // Define + operator for geometry_msgs::Vector3
 geometry_msgs::Vector3 operator+(geometry_msgs::Vector3 A, geometry_msgs::Vector3 B)
 {
