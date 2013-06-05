@@ -5,8 +5,6 @@
     
     This node listens to the tf from the mo-cap system and outputs a geometry_msgs::Vector3 of "current_position"
 
-Edit: Matt Beall - Global Yaw and velocity computation
-
 */
 
 
@@ -16,7 +14,6 @@ Edit: Matt Beall - Global Yaw and velocity computation
 #include "geometry_msgs/TransformStamped.h"
 #include "ros/time.h"
 #include <std_msgs/Float32.h>
-#include <math.h>
 
 
 #define yaw 0
@@ -26,7 +23,7 @@ Edit: Matt Beall - Global Yaw and velocity computation
 
 
 geometry_msgs::Vector3 pcurr;
-geometry_msgs::Vector3 vcurr;
+
 
 int main(int argc, char** argv)
 {
@@ -34,48 +31,26 @@ int main(int argc, char** argv)
     ros::NodeHandle node;
        
     ros::Publisher pcurr_pub = node.advertise<geometry_msgs::Vector3>("current_position",1);
-    ros::Publisher vcurr_pub = node.advertise<geometry_msgs::Vector3>("current_velocity",1);
-    
     ros::Publisher yaw_pub = node.advertise<std_msgs::Float32>("current_yaw",1);
     tf::TransformListener listener;
     tf::StampedTransform stamped;
-    int l_rate = 50;
-    ros::Rate loop_rate(l_rate);
 
-    double plast[] = {0, 0, 0};
-    double vx, vy, vz, yaw_glob;
-    vx = 0;
-    vy = 0;
-    vz = 0;
-
+    ros::Rate loop_rate(50);
     while(ros::ok())
     {
         listener.lookupTransform("/optitrak", "/quad",  ros::Time(0), stamped);
         pcurr.x = stamped.getOrigin().getX();
         pcurr.y = stamped.getOrigin().getY();
         pcurr.z = stamped.getOrigin().getZ();
-	
-	//Compute Velocities and store position for next step
-	//(distance)*(Hz) = distance/second
-	vx = l_rate * (pcurr.x - plast[0]);
-	vy = l_rate * (pcurr.y - plast[1]);
-	vz = l_rate * (pcurr.z - plast[3]);
-
-	plast[0] = pcurr.x;
-	plast[1] = pcurr.y;
-	plast[2] = pcurr.z; 
-        
-	double euler_angles[3];
+        double euler_angles[3];
         pcurr_pub.publish(pcurr);
-        
-	//Get RPY angles, and compute global Yaw
-	btMatrix3x3(stamped.getRotation()).getRPY(euler_angles[roll], euler_angles[pitch], euler_angles[yaw]);        
-        
-	yaw_glob = atan2(cos(euler_angles[roll])*sin(euler_angles[yaw]) + sin(euler_angles[roll])*sin(euler_angles[pitch])*cos(euler_angles[yaw]), cos(euler_angles[pitch])*cos(euler_angles[yaw]) );
-	yaw_pub.publish(yaw_glob);
+        //btMatrix3x3(stamped.getRotation()).getRPY(euler_angles[roll], euler_angles[pitch], euler_angles[yaw]);        
+        //yaw_pub.publish(euler_angles[yaw]);
         ros::spinOnce();
         loop_rate.sleep();
 
+        // Needs to have velocity published
+        // Need yaw about global Z not local Z. mocap sends out euler RPY (I think) - Daman
     }
 }
 
