@@ -27,6 +27,7 @@ Edit: Matt Beall - Global Yaw and velocity computation
 
 geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 vcurr;
+std_msgs::Float32 yaw_glob;
 
 int main(int argc, char** argv)
 {
@@ -43,10 +44,6 @@ int main(int argc, char** argv)
     ros::Rate loop_rate(l_rate);
 
     double plast[] = {0, 0, 0};
-    double vx, vy, vz, yaw_glob;
-    vx = 0;
-    vy = 0;
-    vz = 0;
 
     while(ros::ok())
     {
@@ -57,9 +54,9 @@ int main(int argc, char** argv)
 	
 	//Compute Velocities and store position for next step
 	//(distance)*(Hz) = distance/second
-	vx = l_rate * (pcurr.x - plast[0]);
-	vy = l_rate * (pcurr.y - plast[1]);
-	vz = l_rate * (pcurr.z - plast[3]);
+	vcurr.x = l_rate * (pcurr.x - plast[0]);
+	vcurr.y = l_rate * (pcurr.y - plast[1]);
+	vcurr.z = l_rate * (pcurr.z - plast[3]);
 
 	plast[0] = pcurr.x;
 	plast[1] = pcurr.y;
@@ -67,11 +64,12 @@ int main(int argc, char** argv)
         
 	double euler_angles[3];
         pcurr_pub.publish(pcurr);
-        
+        vcurr_pub.publish(vcurr);
+
 	//Get RPY angles, and compute global Yaw
 	btMatrix3x3(stamped.getRotation()).getRPY(euler_angles[roll], euler_angles[pitch], euler_angles[yaw]);        
         
-	yaw_glob = atan2(cos(euler_angles[roll])*sin(euler_angles[yaw]) + sin(euler_angles[roll])*sin(euler_angles[pitch])*cos(euler_angles[yaw]), cos(euler_angles[pitch])*cos(euler_angles[yaw]) );
+	yaw_glob.data = atan2(cos(euler_angles[roll])*sin(euler_angles[yaw]) + sin(euler_angles[roll])*sin(euler_angles[pitch])*cos(euler_angles[yaw]), cos(euler_angles[pitch])*cos(euler_angles[yaw]) );
 	yaw_pub.publish(yaw_glob);
         ros::spinOnce();
         loop_rate.sleep();

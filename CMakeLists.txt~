@@ -25,11 +25,11 @@ find_package(Eigen REQUIRED)
 include_directories(${EIGEN_INCLUDE_DIRS})
 add_definitions(${EIGEN_DEFINITIONS})
 
-rosbuild_add_executable(drone_control src/ardrone_controller.cpp)
+#rosbuild_add_executable(drone_control src/ardrone_controller.cpp)
 rosbuild_add_executable(projection src/projection.cpp)
-rosbuild_add_executable(mocap src/tf_listener.cpp)
-rosbuild_add_executable(fwddynamics src/dynamics.cpp)
-rosbuild_add_executable(invdynamics src/invdynamics.cpp)
+#rosbuild_add_executable(mocap src/tf_listener.cpp)
+#rosbuild_add_executable(fwddynamics src/dynamics.cpp)
+#rosbuild_add_executable(invdynamics src/invdynamics.cpp)
 
 
 #common commands for building c++ executables and libraries
