@@ -70,6 +70,8 @@ int main(int argc, char** argv)
 	btMatrix3x3(stamped.getRotation()).getRPY(euler_angles[roll], euler_angles[pitch], euler_angles[yaw]);        
         
 	yaw_glob.data = atan2(cos(euler_angles[roll])*sin(euler_angles[yaw]) + sin(euler_angles[roll])*sin(euler_angles[pitch])*cos(euler_angles[yaw]), cos(euler_angles[pitch])*cos(euler_angles[yaw]) );
+	//yaw_glob.data = euler_angles[yaw];
+	// TEST COMMENT
 	yaw_pub.publish(yaw_glob);
         ros::spinOnce();
         loop_rate.sleep();
