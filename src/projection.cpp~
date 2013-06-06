@@ -158,7 +158,7 @@ int main(int argc, char** argv)
                             }
                         }
                     }  
-			/* FIX SOME BUG HERE - Daman                 
+			/* FIX SOME BUG HERE                 
                     geometry_msgs::Vector3 intersect;
                     intersect = intersectLine(pcurr,pdes_new,solveIntersection(pcurr, pdes_new, seeable_obs[t_argmin]));
                     geometry_msgs::Vector3 project;
