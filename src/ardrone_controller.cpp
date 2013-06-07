@@ -150,7 +150,8 @@ int main(int argc, char** argv)
 	    twist_msg.linear.x= u.x;
 	    twist_msg.linear.y= u.y;
 	    twist_msg.linear.z= u.z;
-	    twist_msg.angular.z= -1.0*K*yaw;
+	    //twist_msg.angular.z= -1.0*K*yaw;
+		twist_msg.angular.z = 0.0;
 	    pub_twist.publish(twist_msg);
 	
 	    ros::spinOnce();
