@@ -55,9 +55,9 @@ int main(int argc, char** argv)
 		u_out.z = joy_z;
 		if(u_out.x < dead_zone && u_out.x > -dead_zone)
 			u_out.x = 0.0;
-		if(abs(u_out.y) < dead_zone)
+		if(u_out.y < dead_zone && u_out.y > -dead_zone)
 			u_out.y = 0.0;
-		if(abs(u_out.z) < dead_zone)
+		if(u_out.z < dead_zone && u_out.z > -dead_zone)
 			u_out.z = 0.0;
 		u_pub.publish(u_out);
 		ros::spinOnce();

@@ -19,6 +19,7 @@ Edit: Matt Beall - Global Yaw and velocity computation
 #include <math.h>
 #include <Eigen/Dense>
 
+using namespace std;
 
 #define yaw 0
 #define pitch 1
@@ -52,6 +53,7 @@ int main(int argc, char** argv)
     //plast(0) = 0; plast(1) = 0; plast(2) = 0;
     //double plast[3] = {0,0,0};
     std::vector<double> plast(3);
+    Eigen::Matrix3f Rot;
     plast[0]=0;
     plast[1]=0;
     plast[2]=0;
@@ -81,14 +83,33 @@ int main(int argc, char** argv)
 	//Get RPY angles, and compute global Yaw
 	btMatrix3x3(stamped.getRotation()).getRPY(euler_angles[roll], euler_angles[pitch], euler_angles[yaw]);        
         
+
+	//Finds Rotation matrix using extrinsic RPY angles then uses inverse kin to find intrinsic. - Matt
+	Rot(0,0) = cos(euler_angles[pitch])*cos(euler_angles[yaw]);
+	Rot(1,0) = cos(euler_angles[roll])*sin(euler_angles[yaw]) + cos(euler_angles[yaw])*sin(euler_angles[pitch])*sin(euler_angles[roll]);
+	Rot(2,0) = sin(euler_angles[yaw])*sin(euler_angles[roll]) - cos(euler_angles[yaw])*cos(euler_angles[roll])*sin(euler_angles[pitch]);
+	Rot(0,1) = -cos(euler_angles[pitch])*sin(euler_angles[yaw]);
+	Rot(1,1) = cos(euler_angles[yaw])*cos(euler_angles[roll]) - sin(euler_angles[pitch])*sin(euler_angles[yaw])*sin(euler_angles[roll]);
+	Rot(2,1) = cos(euler_angles[yaw])*sin(euler_angles[roll]) + cos(euler_angles[roll])*sin(euler_angles[pitch])*sin(euler_angles[yaw]);
+	Rot(0,2) = sin(euler_angles[pitch]);
+	Rot(1,2) = -cos(euler_angles[pitch])*sin(euler_angles[roll]);
+	Rot(2,2) = cos(euler_angles[pitch])*cos(euler_angles[roll]);
+	
+	//Intrinsic RPY - Matt
+	roll_glob.data = atan2(Rot(2,1),Rot(2,2));
+	pitch_glob.data = asin(-Rot(2,0));
+	yaw_glob.data = atan2(Rot(1,0),Rot(0,0));
+
 	//yaw_glob.data = atan2(cos(euler_angles[roll])*sin(euler_angles[yaw]) + sin(euler_angles[roll])*sin(euler_angles[pitch])*cos(euler_angles[yaw]), cos(euler_angles[pitch])*cos(euler_angles[yaw]) );
-	yaw_glob.data = euler_angles[yaw];
-	roll_glob.data = euler_angles[roll];
-	pitch_glob.data = euler_angles[pitch];
+	//yaw_glob.data = euler_angles[yaw];
+	//roll_glob.data = euler_angles[roll];
+	//pitch_glob.data = euler_angles[pitch];
+	// These angles are measured as extrinsic(global). We now need to get the intrinsic(moving local frames) yaw or we can't pitch and roll. - Daman
+	
+
 	yaw_pub.publish(yaw_glob);
 	roll_pub.publish(roll_glob);
 	pitch_pub.publish(pitch_glob);
-	// These angles are measured as extrinsic(global). We now need to get the intrinsic(moving local frames) yaw or we can't pitch and roll. - Daman
         ros::spinOnce();
         loop_rate.sleep();
 

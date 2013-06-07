@@ -7,9 +7,12 @@
 <node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
 <node pkg="ros_vrpn_client" name="quad" type="ros_vrpn_client" args="_vrpn_server_ip:=visionsystem.cs.utah.edu" required="true" />
 
-<node pkg = "arl_PCA" type="mocap" name="Mocap" respawn="true" />
-<node pkg = "arl_PCA" type="flyfromjoy" name="Joy_Node" respawn = "true" />
-<node pkg = "arl_PCA" type="drone_control" name="Drone_Control" respawn = "true" />
+<node pkg="arl_PCA" type="mocap" name="Mocap" respawn="true" />
+<node pkg="arl_PCA" type="fwddynamics" name="Forward_Dynamics" respawn="true" />
+<node pkg="arl_PCA" type="invdynamics" name="Inverse_Dynamics" respawn="true" />
+<node pkg="arl_PCA" type="projection" name="Project" respawn="true" />
+<node pkg="arl_PCA" type="drone_control" name="Drone_Control" respawn = "true" />
+
 
 <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
 		
@@ -73,5 +76,3 @@
 		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
 </node>
 
-
-</launch>

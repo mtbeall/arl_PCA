@@ -1,0 +1,7 @@
+<launch>
+
+<node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
+<node pkg="ros_vrpn_client" name="quad" type="ros_vrpn_client" args="_vrpn_server_ip:=visionsystem.cs.utah.edu" required="true" />
+<node pkg = "arl_PCA" type="mocap" name="Mocap" respawn="true" />
+
+</launch>

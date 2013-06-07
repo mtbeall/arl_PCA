@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 	ros::Publisher pub_empty_takeoff;
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	ros::Publisher pub_twist;
-	pub_twist=node.advertise<geometry_msgs::Twist>("joy_vel_twist", 1); 
+	pub_twist=node.advertise<geometry_msgs::Twist>("cmd_vel", 1); 
 	
     // ROS subscribers
 	ros::Subscriber joy_sub;
@@ -151,8 +151,12 @@ int main(int argc, char** argv)
 	    twist_msg.linear.y= u.y;
 	    twist_msg.linear.z= u.z;
 	    twist_msg.angular.z= -1.0*K*yaw;
+		//twist_msg.angular.z = 0.0;
+		twist_msg.angular.x = 1.0;
+		twist_msg.angular.y = 1.0;
 	    pub_twist.publish(twist_msg);
-	
+		ROS_INFO("Battery: %d", drone_batt);
+
 	    ros::spinOnce();
 	    loop_rate.sleep();
     }//ros::ok
