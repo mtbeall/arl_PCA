@@ -165,12 +165,11 @@ int main(int argc, char** argv)
                     project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
                     double dist;
                     dist = distance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
-                    pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
+                    pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); */
 		    for(int i = 0; i < seeable_obs.size(); i++)
 		    {
 		    	seeable_obs[i].t = 20.0;
 		    }
-			*/
                 }
                 else
                     break;
@@ -273,10 +272,10 @@ geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, c
 void buildObstacles(std::vector<obstacle>& full_obs_list)
 {
     // Build list of obstacles here.
-    double width = 3.0;    // Width of enclosure (m)
-    double height = 3.0;   // Height of enclosure (m)
-    double length = 4.0;   // Length of enclosure (m)
-    double radius = 0.25;   // Radius of quad sphere (m)
+    double width = 3.96;    // Width of enclosure (m)
+    double height = 3.5;   // Height of enclosure (m)
+    double length = 6.85;   // Length of enclosure (m)
+    double radius = 0.559/0.5;   // Radius of quad sphere (m)
     std::vector<geometry_msgs::Vector3> vertex;
     geometry_msgs::Vector3 normal;
     obstacle newObs;

@@ -13,7 +13,6 @@
 <node pkg="arl_PCA" type="projection" name="Project" respawn="true" />
 <node pkg="arl_PCA" type="drone_control" name="Drone_Control" respawn = "true" />
 
-
 <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
 		
 		<param name="do_imu_caliberation" value="true" />
@@ -75,4 +74,6 @@
 		<rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
 		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
 </node>
+
+</launch>
 

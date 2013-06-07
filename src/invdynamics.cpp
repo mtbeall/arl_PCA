@@ -13,7 +13,7 @@
 #include <unsupported/Eigen/MatrixFunctions>
 
 // Defines
-#define xdim 6
+#define xdim 12
 #define udim 3
 #define pdim 3
 
@@ -27,6 +27,8 @@ geometry_msgs::Vector3 pdes_new;
 geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 vcurr;
 geometry_msgs::Vector3 u_out;
+geometry_msgs::Vector3 rcurr;
+geometry_msgs::Vector3 rdotcurr;
 
 // Read position from mocap
 void pos_callback(const geometry_msgs::Vector3& pos_in)
@@ -50,6 +52,20 @@ void des_pos_callback(const geometry_msgs::Vector3& pos_in)
     pdes_new.x = pos_in.x;
     pdes_new.y = pos_in.y;
     pdes_new.z = pos_in.z;
+}
+
+void r_callback(const geometry_msgs::Vector3& r_in)
+{
+	rcurr.x = r_in.x;
+	rcurr.y = r_in.y;
+	rcurr.z = r_in.z;
+}
+
+void rdot_callback(const geometry_msgs::Vector3& rdot_in)
+{
+	rdotcurr.x = rdot_in.x;
+	rdotcurr.y = rdot_in.y;
+	rdotcurr.z = rdot_in.z;
 }
 
 // Eigen initialization for inv dynamics math
@@ -87,6 +103,10 @@ int main(int argc, char** argv)
     vcurr_sub = node.subscribe("current_velocity",1,vel_callback);
     ros::Subscriber pdes_sub;
     pdes_sub = node.subscribe("new_desired_position",1,des_pos_callback);
+	ros::Subscriber rcurr_sub;
+	rcurr_sub = node.subscribe("current_r",1,r_callback);
+	ros::Subscriber rdotcurr_sub;
+	rdotcurr_sub = node.subscribe("current_rdot",1,rdot_callback);
 
     // Maps state to position
     P = Eigen::MatrixXf::Zero(pdim,xdim);
@@ -102,6 +122,8 @@ int main(int argc, char** argv)
         // Set x0
         x0[0] = pcurr.x; x0[1] = pcurr.y; x0[2] = pcurr.z;
         x0[3] = vcurr.x; x0[4] = vcurr.y; x0[5] = vcurr.z;
+		x0[6] = rcurr.x; x0[7] = rcurr.y; x0[8] = rcurr.z;
+		x0[9] = rdotcurr.x; x0[10] = rdotcurr.y; x0[11] = rdotcurr.z;
         // Set pdes
         pd[0] = pdes_new.x; pd[1] = pdes_new.y; pd[2] = pdes_new.z;
         // Calculate u, may have to map to -1 and 1
@@ -117,16 +139,64 @@ int main(int argc, char** argv)
 // Stores A and B matrices
 void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B)
 {
-    // Set dynamics here, A = ... B = ...
+	A << 0,0,0,1,0,0,0,0,0,0,0,0,
+   		 0,0,0,0,1,0,0,0,0,0,0,0,
+		 0,0,0,0,0,1,0,0,0,0,0,0,
+		 0,0,0,-0.25,0,0,0,9.812,0,0,0,0,
+		 0,0,0,0,-0.25,0,-9.812,0,0,0,0,0,
+		 0,0,0,0,0,-0.25,0,0,0,0,0,0,
+		 0,0,0,0,0,0,0,0,0,1,0,0,
+		 0,0,0,0,0,0,0,0,0,0,1,0,
+		 0,0,0,0,0,0,0,0,0,0,0,1,
+		 0,0,0,0,0,0,-750.0,0,0,-54.7723,0,0,
+		 0,0,0,0,0,0,0,-750.0,0,0,-54.7723,0,
+		 0,0,0,0,0,0,0,0,0,0,0,-0.1;
+	B << 0,0,0,
+		 0,0,0,
+		 0,0,0,
+		 0,0,0,
+		 0,0,0,
+		 2.381,0,0,
+		 0,0,0,
+		 0,0,0,
+		 0,0,0,
+		 0,750.0,0,
+		 0,0,750.0,
+		 0,0,0;
 }
 
 // Calculates and stores F,G matrices for a given number of time steps t
 void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const int& t)
 {
-    F = Eigen::MatrixXf::Identity(xdim,xdim); // F = A^t
-    G = Eigen::MatrixXf::Zero(xdim,udim);     // G = {summation from 0 to t-1} A^k*B
+        /*F = Eigen::MatrixXf::Identity(xdim,xdim);   // F = A^t
+    G = Eigen::MatrixXf::Zero(xdim,udim);       // G = {summation from 0 to t-1} A^k*B
     F = power(F,t);
-    for(int i=0; i < (t-1); i++) { G = G + power(A,i)*B; }
+    for(int i=0; i < (t-1); i++) { G = G + power(A,i)*B; }*/
+	F << 1.0000,0,0,0.5139,0,0,0,0.3336,0,0,0.0059,0,
+         0,1.0000,0,0,0.5139,0,-0.3336,0,0,-0.0059,0,0,
+         0,0,    1.0000,         0,         0,    0.5139,         0,         0,         0,         0,         0,         0,
+         0,0,         0,    0.8715,         0,         0,         0,    0.6332,         0,         0,    0.0116,         0,
+         0,0,         0,         0,    0.8715,         0,   -0.6332,         0,         0,   -0.0116,         0,         0,
+         0,0,         0,         0,         0,    0.8715,         0,         0,         0,         0,         0,         0,
+         0,0,         0,         0,         0,         0,    0.0000,         0,         0,    0.0000,         0,         0,
+         0,0,0,         0,         0,         0,         0,    0.0000,         0,         0,    0.0000,         0,
+         0,0,0,         0,         0,         0,         0,         0,    1.0000,         0,         0,    0.5351,
+         0,0,0,         0,         0,         0,   -0.0001,         0,         0,   -0.0000,         0,         0,
+         0,0,0,0,0,0,0,-0.0001,0,0,-0.0000,0,
+         0,0,0,0,0,0,0,0,0,0,0,0.9465;
+
+	G << 0,         0,    1.0847,
+         0,   -1.0847,         0,
+    0.3442,         0,         0,
+         0,         0,    4.4089,
+         0,   -4.4089,         0,
+    1.2235,         0,         0,
+         0,    1.0000,         0,
+         0,         0,    1.0000,
+         0,         0,         0,
+         0,    0.0001,         0,
+         0,         0,    0.0001,
+         0,         0,         0;
 }
 
 // Power function. Eigen .pow() only works for static matrices not dynamic matrices
