@@ -23,6 +23,7 @@ double joy_x,joy_y,joy_z;
 double tau = 2.0;
 double dt = 1.0/50.0;
 int t = (int) tau/dt;
+double dead_zone = 0.1;
 sensor_msgs::Joy joy_msg_in;
 geometry_msgs::Vector3 pdes;
 geometry_msgs::Vector3 pcurr;
@@ -132,7 +133,14 @@ int main(int argc, char** argv)
         merge_new_msgs();
         // Set u from joystick, May have to map from -1 to 1 later
         //u[0] = joy_x; u[1] = joy_y; u[2] = joy_z;
-        u[0] = joy_z; u[1] = joy_y; u[2] = joy_x;
+        u[0] = joy_z; u[2] = -joy_y; u[1] = -joy_x;
+		if(u[0] < dead_zone && u[0] > -dead_zone)
+			u[0] = 0.0;
+		if(u[1] < dead_zone && u[1] > -dead_zone)
+			u[1] = 0.0;
+		if(u[2] < dead_zone && u[2] > -dead_zone)
+			u[2] = 0.0;
+
         // Set x0
         x0[0] = pcurr.x; x0[1] = pcurr.y; x0[2] = pcurr.z;
         x0[3] = vcurr.x; x0[4] = vcurr.y; x0[5] = vcurr.z;

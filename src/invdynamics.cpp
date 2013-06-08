@@ -129,7 +129,8 @@ int main(int argc, char** argv)
         // Calculate u, may have to map to -1 and 1
         u = (P*G).inverse()*(pd - P*F*x0);
         // Set and send u out
-        u_out.x = u[0]; u_out.y = u[1]; u_out.z = u[2];
+        //u_out.x = u[0]; u_out.y = u[1]; u_out.z = u[2];
+		u_out.z = u[0]; u_out.x = -u[1]; u_out.y = -u[2];
         u_pub.publish(u_out);
         ros::spinOnce();
         loop_rate.sleep();

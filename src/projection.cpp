@@ -104,10 +104,10 @@ void vel_callback(const geometry_msgs::Vector3& vcurr_in)
 
 // Pre-declarations
 double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
-double distance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
+double findDistance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
 void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs);
-void solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane, Eigen::Vector3f& tuv);
-geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f tuv);
+Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane);
+geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& t);
 bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs);
 geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane);
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane);
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
     
     // ROS publishers
     ros::Publisher  pdes_new_pub;
-    pdes_new_pub = node.advertise<geometry_msgs::Vector3>("new_desired_pos", 1);
+    pdes_new_pub = node.advertise<geometry_msgs::Vector3>("new_desired_position", 1);
 
     // ROS subscribers
     ros::Subscriber pdes_old_sub;
@@ -152,6 +152,7 @@ int main(int argc, char** argv)
         {
             while(true)
             {
+				/* There is still some bug in this part of the code as expected. All compiles and will run from launch file. When I give it just an x or y input when there is no collision it seems to work alright. However, when I give a z command it gives an X and Z command in the e36 order magnitude which obviously is incorrect for a new desired position. NO CLUE what is wrong but just giving an update.... - Daman */
                 imminentCollision = checkIntersection(pcurr,pdes_new,seeable_obs);
                 if (imminentCollision)                      // Check if imminent collision
                 {
@@ -165,15 +166,14 @@ int main(int argc, char** argv)
                                 t_argmin = i;
                             }
                         }
-                    }  
-			        // FIX SOME BUG HERE - Daman                 
-                    //geometry_msgs::Vector3 intersect;
-                    //intersect = intersectLine(pcurr,pdes_new,solveIntersection(pcurr, pdes_new, seeable_obs[t_argmin]));
-                    //geometry_msgs::Vector3 project;
-                    //project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
-                    //double dist;
-                    //dist = distance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
-                    //pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
+                    }                 
+                    geometry_msgs::Vector3 intersect;
+                    intersect = intersectLine(pcurr,pdes_new,solveIntersection(pcurr, pdes_new, seeable_obs[t_argmin]));
+                    geometry_msgs::Vector3 project;
+                    project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
+                    double dist;
+                    dist = findDistance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
+                    pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
 					for(int i = 0; i < seeable_obs.size(); i++)
 					{
 						seeable_obs[i].t = 20.0;
@@ -196,9 +196,9 @@ double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
 }
 
 // Returns distance betweent wo points
-double distance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
+double findDistance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
 {
-    return std::sqrt( std::pow((A.x-B.x),2) + std::pow((A.y - B.y),2) + std::pow((A.z - B.z),2) );
+    return std::sqrt(std::pow((A.x-B.x),2)+std::pow((A.y-B.y),2)+std::pow((A.z-B.z),2));
 }
 
 // Checks if an obstacle is see-able
@@ -214,7 +214,7 @@ void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::V
 }
 
 // Solve for t,u,v for intersection
-void solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane, Eigen::Vector3f& tuv)
+Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane)
 {
     Eigen::Matrix3f A;
     Eigen::Vector3f b;
@@ -230,14 +230,13 @@ void solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
 	b(0) = pcurr.x - plane.vertices[0].x;
 	b(1) = pcurr.y - plane.vertices[0].y;
 	b(2) = pcurr.z - plane.vertices[0].z;
-    Eigen::Vector3f Ainv = A.inverse()*b;
-	tuv(0) = Ainv(0); tuv(1) = Ainv(1); tuv(2) = Ainv(2);
+    return A.inverse()*b;
 }
 
 // Find the point a line intersects with a plane
-geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& tuv)
+geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& t)
 {
-    return pcurr + tuv(0)*(pdes - pcurr);
+    return pcurr + t(0)*(pdes - pcurr);
 }
 
 // Checks for an intersection between current position and desired position for all seeable obstacles
@@ -246,8 +245,8 @@ bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
     Eigen::Vector3f x;
     for(int i = 0; i < see_obs.size(); i++)
     {
-        solveIntersection(pcurr, pdes, see_obs[i],x);
-        if(x(2) <= 1 && x(2) >= 0 && x(3) <= 1 && x(3) >= 0 && x(2)+x(3) <= 1)
+        x = solveIntersection(pcurr, pdes, see_obs[i]);
+        if(x(1) <= 1 && x(1) >= 0 && x(2) <= 1 && x(2) >= 0 && x(1)+x(2) <= 1)
         {
             see_obs[i].t = x(0);
             return true;

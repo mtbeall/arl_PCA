@@ -105,9 +105,9 @@ int main(int argc, char** argv)
 		rlast[0] = rcurr.x; rlast[1] = rcurr.y; rlast[2] = rcurr.z;
 
 		double theta = acos(((Rot(0,0)+Rot(1,1)+Rot(2,2))-1)*0.5);
-		rcurr.x = theta*(Rot(2,1) - Rot(1,2));
-		rcurr.y = theta*(Rot(0,2) - Rot(2,0));
-		rcurr.z = theta*(Rot(1,0) - Rot(0,1));
+		rcurr.x = (0.5*theta/sin(theta))*(Rot(2,1) - Rot(1,2));
+		rcurr.y = (0.5*theta/sin(theta))*(Rot(0,2) - Rot(2,0));
+		rcurr.z = (0.5*theta/sin(theta))*(Rot(1,0) - Rot(0,1));
 
 		//Intrinsic RPY - Matt
 		//roll_glob.data = atan2(Rot(2,1),Rot(2,2));
