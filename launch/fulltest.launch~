@@ -10,13 +10,13 @@
 
 <node pkg="arl_PCA" type="fwddynamics" name="Forward_Dynamics" respawn="true" />
 
-<node pkg="arl_PCA" type="projection" name="Project" respawn="true" />
+<node pkg="arl_PCA" type="projection" name="Project" respawn="true" output="screen" />
 
 <node pkg="arl_PCA" type="invdynamics" name="Inverse_Dynamics" respawn="true" />
 
 <node pkg="arl_PCA" type="drone_control" name="Drone_Control" respawn = "true" />
 
-<!-- <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
+ <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
 		
 		<param name="do_imu_caliberation" value="true" />
 		<param name="tf_prefix" value="$(arg QUAD_NAME)" />

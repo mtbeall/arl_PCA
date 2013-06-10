@@ -10,13 +10,13 @@
 
 <node pkg="arl_PCA" type="fwddynamics" name="Forward_Dynamics" respawn="true" />
 
-<node pkg="arl_PCA" type="projection" name="Project" respawn="true" />
+<node pkg="arl_PCA" type="projection" name="Project" respawn="true" output="screen" />
 
 <node pkg="arl_PCA" type="invdynamics" name="Inverse_Dynamics" respawn="true" />
 
 <node pkg="arl_PCA" type="drone_control" name="Drone_Control" respawn = "true" />
 
-<!-- <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
+ <node name="Drone_Drivers" pkg="ardrone_autonomy" type="ardrone_driver" output="screen" respawn="true" clear_params="true" args="-ip $(arg QUAD_IP)"> 
 		
 		<param name="do_imu_caliberation" value="true" />
 		<param name="tf_prefix" value="$(arg QUAD_NAME)" />
@@ -27,7 +27,8 @@
 		<param name="bitrate" value="4000" />
 		<param name="altitude_max" value="5000" />
 		<param name="altitude_min" value="500" />
-		<param name="euler_angle_max" value="0.136" /> 
+		<!--<param name="euler_angle_max" value="0.136" />-->
+		<param name="euler_angle_max" value="0.1" />  
 		<param name="control_vz_max" value="2000" /> 
 		<param name="control_yaw" value="1.75" />
 		<param name="navdata_demo" value="FALSE" /> 
@@ -77,6 +78,6 @@
 		<rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
 		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
 </node>
--->
+
 </launch>
 

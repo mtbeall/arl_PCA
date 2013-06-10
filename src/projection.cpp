@@ -9,6 +9,7 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Vector3.h>
 #include <Eigen/Dense>
+#include <Eigen/LU>
 #include <math.h>
 
 // Global variables for use in program
@@ -112,7 +113,8 @@ bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
 geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane);
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane);
 void buildObstacles(std::vector<obstacle>& full_obs_list);
-
+double determ(const Eigen::MatrixXf& A);
+double joyError = 0.01;
 // Main
 int main(int argc, char** argv)
 {
@@ -142,46 +144,51 @@ int main(int argc, char** argv)
     // loop
     while(ros::ok()) {
         ros::spinOnce();
-		 std::vector<obstacle> seeable_obs;              // declaration of list of seeable obstacles
+		std::vector<obstacle> seeable_obs;              // declaration of list of seeable obstacles
         bool imminentCollision = false;                 // Set imminent collision to false initially
         check_seeable(full_obs_list,pcurr,seeable_obs); // Check normals to populate seeable obstacle list
         pdes_new.x = pdes_old.x;                        // Setting new pdes to the old one, will be updated if necessary
         pdes_new.y = pdes_old.y;
         pdes_new.z = pdes_old.z;
-        if (seeable_obs.size() > 0)                     // Check if there are seeable obstacles
-        {
-            while(true)
-            {
+	    if (seeable_obs.size() > 0)                     // Check if there are seeable obstacles
+	    {
+	        while(true)
+	        {
 				/* There is still some bug in this part of the code as expected. All compiles and will run from launch file. When I give it just an x or y input when there is no collision it seems to work alright. However, when I give a z command it gives an X and Z command in the e36 order magnitude which obviously is incorrect for a new desired position. NO CLUE what is wrong but just giving an update.... - Daman */
-                imminentCollision = checkIntersection(pcurr,pdes_new,seeable_obs);
-                if (imminentCollision)                      // Check if imminent collision
-                {
-                    for(int i = 0; i < seeable_obs.size(); i++)
-                    {
-                        if(seeable_obs[i].t < 2.0)
-                        {
-                            if(seeable_obs[i].t < t_min)
-                            {
-                                t_min = seeable_obs[i].t;
-                                t_argmin = i;
-                            }
-                        }
-                    }                 
-                    geometry_msgs::Vector3 intersect;
-                    intersect = intersectLine(pcurr,pdes_new,solveIntersection(pcurr, pdes_new, seeable_obs[t_argmin]));
-                    geometry_msgs::Vector3 project;
-                    project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
-                    double dist;
-                    dist = findDistance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
-                    pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
+				imminentCollision = false;
+	            imminentCollision = checkIntersection(pcurr,pdes_new,seeable_obs);
+	            if (imminentCollision)                      // Check if imminent collision
+	            {
+					ROS_INFO("Collision!!!!!!!!!");
+	                for(int i = 0; i < seeable_obs.size(); i++)
+	                {
+	                    if(seeable_obs[i].t < 2.0)
+	                    {
+	                        if(seeable_obs[i].t < t_min)
+	                        {
+	                            t_min = seeable_obs[i].t;
+	                            t_argmin = i;
+	                        }
+	                    }
+	                }                 
+	                geometry_msgs::Vector3 intersect;
+	                intersect = intersectLine(pcurr,pdes_new,solveIntersection(pcurr, pdes_new, seeable_obs[t_argmin]));
+	                geometry_msgs::Vector3 project;
+	                project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
+	                double dist;
+	                dist = findDistance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
+	                pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
 					for(int i = 0; i < seeable_obs.size(); i++)
 					{
 						seeable_obs[i].t = 20.0;
 					}
-                }
-                else
-                    break;
-            }
+	            }
+	            else
+				{
+					ROS_INFO("NO Collision");
+	                break;
+				}
+	        }
 		}
         pdes_new_pub.publish(pdes_new);                 // Publish new desired position
 		loop_rate.sleep();                              // Wait if necessary to reach desired loop_rate
@@ -210,14 +217,16 @@ void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::V
         AB = pcurr - obs_list[i].vertices[0];
         if (dot(AB,obs_list[i].normal) > 0)
             see_obs.push_back(obs_list[i]);
-    }  
+    }
 }
 
 // Solve for t,u,v for intersection
 Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane)
 {
+	// BUG PROBABLY HERE!!!!!!!!! GETTING NaN or intersections where we shouldn't
     Eigen::Matrix3f A;
     Eigen::Vector3f b;
+	Eigen::Vector3f Answer;
     A(0,0) = pcurr.x - pdes.x;
     A(0,1) = plane.vertices[1].x - plane.vertices[0].x;
     A(0,2) = plane.vertices[2].x - plane.vertices[0].x;
@@ -230,8 +239,18 @@ Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geo
 	b(0) = pcurr.x - plane.vertices[0].x;
 	b(1) = pcurr.y - plane.vertices[0].y;
 	b(2) = pcurr.z - plane.vertices[0].z;
-    return A.inverse()*b;
+	if(A.determinant() < 0.001 && A.determinant() > -0.001)
+	{
+		//ROS_INFO("Singular");
+		Answer(0) = 5.0; Answer(1) = 5.0; Answer(2) = 5.0;
+		return Answer;
+	}
+	Answer = A.inverse()*b;
+	//ROS_INFO("t = %f, u = %f, v = %f", Answer(0), Answer(1), Answer(2));
+	//ROS_INFO("Not Singular");
+	return Answer;
 }
+
 
 // Find the point a line intersects with a plane
 geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& t)
@@ -246,7 +265,7 @@ bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
     for(int i = 0; i < see_obs.size(); i++)
     {
         x = solveIntersection(pcurr, pdes, see_obs[i]);
-        if(x(1) <= 1 && x(1) >= 0 && x(2) <= 1 && x(2) >= 0 && x(1)+x(2) <= 1)
+        if(x(0) <= 1.0 && x(0) >= 0.0 && x(1) <= 1.0 && x(1) >= 0.0 && x(2) <= 1.0 && x(2) >= 0.0 && x(1)+x(2) <= 1.0)
         {
             see_obs[i].t = x(0);
             return true;
@@ -269,12 +288,13 @@ geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const o
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane)
 {
     double d = 1.0;
+	double f = 1.0;
     geometry_msgs::Vector3 P;
     if (D<d) 
         P = ((d-D)/d) * (project - intersect) + intersect;
     else
         P = intersect;
-    return P + 0.01*plane.normal;
+    return P + f*plane.normal;
 }
 
 // Builds full list of obstacles
@@ -284,22 +304,24 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	double width = 3.96;    // Width of enclosure (m)
 	double height = 3.5;   // Height of enclosure (m)
 	double length = 6.85;   // Length of enclosure (m)
-	double radius = 0.559/0.5;   // Radius of quad sphere (m)
+	//double length = 6.0;
+	double radius = 0.559/2.0;   // Radius of quad sphere (m)
+	//double radius = 0.0;
 	obstacle newObs;
 	geometry_msgs::Vector3 vertex;
 	// Wall by computers
 	vertex.x = width/2.0-radius;
 	vertex.y = -length/2.0+radius;
 	vertex.z = 0.0+radius;
-	newObs.vertices.push_back(vertex);
+	newObs.vertices[0] = vertex;
 	vertex.x = -width/2.0+radius;
 	vertex.y = -length/2.0+radius;
 	vertex.z = 0.0+radius;
-	newObs.vertices.push_back(vertex);
+	newObs.vertices[1] = vertex;
 	vertex.x = -width/2.0+radius;
 	vertex.y = -length/2.0+radius;
 	vertex.z = height-radius;
-	newObs.vertices.push_back(vertex);
+	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 1.0;
 	newObs.normal.z = 0.0;
@@ -455,15 +477,15 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	// Ceiling
 	vertex.x = -width/2.0+radius;
 	vertex.y = -length/2.0+radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[0] = vertex;
 	vertex.x = width/2.0-radius;
 	vertex.y = -length/2.0+radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[1] = vertex;
 	vertex.x = -width/2.0+radius;
 	vertex.y = length/2.0-radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 0.0;
@@ -471,15 +493,15 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	full_obs_list.push_back(newObs);
 	vertex.x = width/2.0-radius;
 	vertex.y = -length/2.0+radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[0] = vertex;
 	vertex.x = width/2.0-radius;
 	vertex.y = length/2.0-radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[1] = vertex;
 	vertex.x = -width/2.0+radius;
 	vertex.y = length/2.0-radius;
-	vertex.z = 0.0+radius;
+	vertex.z = height - radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 0.0;
