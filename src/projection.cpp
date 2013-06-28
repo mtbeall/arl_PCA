@@ -12,6 +12,7 @@
 #include <Eigen/LU>
 #include <math.h>
 
+
 // Global variables for use in program
 geometry_msgs::Vector3 pdes_old;
 geometry_msgs::Vector3 pcurr;
@@ -127,6 +128,7 @@ int main(int argc, char** argv)
     ros::Publisher  pdes_new_pub;
     pdes_new_pub = node.advertise<geometry_msgs::Vector3>("new_desired_position", 1);
 
+
     // ROS subscribers
     ros::Subscriber pdes_old_sub;
     pdes_old_sub = node.subscribe("desired_position", 1, pdes_callback);
@@ -185,7 +187,7 @@ int main(int argc, char** argv)
 	            }
 	            else
 				{
-					ROS_INFO("NO Collision");
+					//ROS_INFO("NO Collision");
 	                break;
 				}
 	        }
@@ -287,14 +289,21 @@ geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const o
 // Finds a point on the line proportional to the intersection or projection point.
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane)
 {
-    double d = 1.0;
-	double f = 1.0;
+    float d = 1.0;
+	float f = 1.5;
+	float K = 0.5;
+	float v;
+	if((f-0.4) < dot(vcurr,plane.normal))
+		v = f-0.4;
+	else
+		v = dot(vcurr,plane.normal);
     geometry_msgs::Vector3 P;
     if (D<d) 
         P = ((d-D)/d) * (project - intersect) + intersect;
     else
         P = intersect;
-    return P + f*plane.normal;
+	//return P + f*plane.normal;
+    return P + (f - v)*plane.normal;
 }
 
 // Builds full list of obstacles
@@ -306,7 +315,7 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	double length = 6.85;   // Length of enclosure (m)
 	//double length = 6.0;
 	double radius = 0.559/2.0;   // Radius of quad sphere (m)
-	//double radius = 0.0;
+	radius = 1.5*radius;
 	obstacle newObs;
 	geometry_msgs::Vector3 vertex;
 	// Wall by computers

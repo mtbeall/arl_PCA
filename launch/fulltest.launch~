@@ -27,7 +27,8 @@
 		<param name="bitrate" value="4000" />
 		<param name="altitude_max" value="5000" />
 		<param name="altitude_min" value="500" />
-		<param name="euler_angle_max" value="0.136" /> 
+		<param name="euler_angle_max" value="0.136" />
+		<param name="euler_angle_max" value="0.1" />  
 		<param name="control_vz_max" value="2000" /> 
 		<param name="control_yaw" value="1.75" />
 		<param name="navdata_demo" value="FALSE" /> 
@@ -77,6 +78,11 @@
 		<rosparam param="cov/imu_av">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]</rosparam>
 		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
 </node>
+
+<!--<node pkg="rxtools" type="rxplot" name="Battery_Monitor" args="/ardrone/navdata/batteryPercent"/>-->
+<!--<node pkg="rxtools" type="rxplot" name="User_Monitor" args = "-t 'Desired Position Before and After Projection'
+	-l BX, BY, BZ, AX, AY, AZ -b 10 /desired_position.x,/desired_position.y,/desired_position.z,/new_desired_position.x,/new_desired_position.y,/new_desired_position.z"/>-->
+<node pkg="rxtools" type="rxplot" name="User_Monitor" args = "-t 'Desired Position Before and After Projection' /desired_position.x,/desired_position.y,/desired_position.z,/new_desired_position.x,/new_desired_position.y,/new_desired_position.z"/>
 
 </launch>
 

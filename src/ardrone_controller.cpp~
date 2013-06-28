@@ -30,7 +30,7 @@ int drone_state =0;
 float drone_batt =100.0;
 std_msgs::Empty emp_msg;
 geometry_msgs::Vector3 v3_msg; //[x, y,z]
-
+std_msgs::Float32 battery;
 // Read in controller buttons	
 void joy_callback(const sensor_msgs::Joy& joy_msg_in)
 {
@@ -85,6 +85,8 @@ int main(int argc, char** argv)
 	pub_empty_takeoff = node.advertise<std_msgs::Empty>("ardrone/takeoff", 1);
 	ros::Publisher pub_twist;
 	pub_twist=node.advertise<geometry_msgs::Twist>("cmd_vel", 1); 
+	ros::Publisher batt_pub;
+	batt_pub = node.advertise<std_msgs::Float32>("battery_charge",1);
 	
     // ROS subscribers
 	ros::Subscriber joy_sub;
@@ -101,6 +103,8 @@ int main(int argc, char** argv)
  	while (ros::ok()) 
     {
 		merge_new_mgs();
+		battery.data = drone_batt;
+		batt_pub.publish(battery);
         // Print message if battery low
 	    if (drone_batt < 30.0)
 	    {
@@ -152,8 +156,6 @@ int main(int argc, char** argv)
 	    twist_msg.linear.z= u.z;
 	    twist_msg.angular.z= -1.0*K*yaw;
 		//twist_msg.angular.z = 0.0;
-		twist_msg.angular.x = 1.0;
-		twist_msg.angular.y = 1.0;
 	    pub_twist.publish(twist_msg);
 		ROS_INFO("Battery: %d", drone_batt);
 
