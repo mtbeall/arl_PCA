@@ -12,16 +12,14 @@
 #include <Eigen/LU>
 #include <math.h>
 
-
 // Global variables for use in program
 geometry_msgs::Vector3 pdes_old;
+geometry_msgs::Vector3 pdes_new;
 geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 vcurr;
-geometry_msgs::Vector3 pdes_new;
 
 // Define + operator for geometry_msgs::Vector3
-geometry_msgs::Vector3 operator+(geometry_msgs::Vector3 A, geometry_msgs::Vector3 B)
-{
+geometry_msgs::Vector3 operator+(geometry_msgs::Vector3 A, geometry_msgs::Vector3 B) {
     geometry_msgs::Vector3 Sum;
     Sum.x = A.x + B.x;
     Sum.y = A.y + B.y;
@@ -30,8 +28,7 @@ geometry_msgs::Vector3 operator+(geometry_msgs::Vector3 A, geometry_msgs::Vector
 }
 
 // Define - operator for geometry_msgs::Vector3
-geometry_msgs::Vector3 operator-(geometry_msgs::Vector3 A, geometry_msgs::Vector3 B)
-{
+geometry_msgs::Vector3 operator-(geometry_msgs::Vector3 A, geometry_msgs::Vector3 B) {
     geometry_msgs::Vector3 Diff;
     Diff.x = A.x - B.x;
     Diff.y = A.y - B.y;
@@ -40,8 +37,7 @@ geometry_msgs::Vector3 operator-(geometry_msgs::Vector3 A, geometry_msgs::Vector
 }   
 
 // Define * operator for geometry_msgs::Vector3
-geometry_msgs::Vector3 operator*(double a, geometry_msgs::Vector3 A)
-{
+geometry_msgs::Vector3 operator*(double a, geometry_msgs::Vector3 A) {
     A.x = a*A.x;
     A.y = a*A.y;
     A.z = a*A.z;
@@ -49,8 +45,7 @@ geometry_msgs::Vector3 operator*(double a, geometry_msgs::Vector3 A)
 }
 
 // Obstacle class: sets list of 3 vertices, normal vector, and a flag variable
-class obstacle
-{
+class obstacle {
     public:
     	std::vector<geometry_msgs::Vector3> vertices; // List of 3 vertices
 	    geometry_msgs::Vector3 normal;                // Normal vector
@@ -81,24 +76,21 @@ class obstacle
 
   
 // Reads in pdes from dynamics
-void pdes_callback(const geometry_msgs::Vector3& pdes_in)
-{
+void pdes_callback(const geometry_msgs::Vector3& pdes_in) {
     pdes_old.x = pdes_in.x;
     pdes_old.y = pdes_in.y;
     pdes_old.z = pdes_in.z;
 }
 
 // Reads in pcurr from mo-cap system
-void pos_callback(const geometry_msgs::Vector3& pcurr_in)
-{
+void pos_callback(const geometry_msgs::Vector3& pcurr_in) {
     pcurr.x = pcurr_in.x;
     pcurr.y = pcurr_in.y;
     pcurr.z = pcurr_in.z;
 }
 
 // Read in vcurr from mocap
-void vel_callback(const geometry_msgs::Vector3& vcurr_in)
-{
+void vel_callback(const geometry_msgs::Vector3& vcurr_in) {
     vcurr.x = vcurr_in.x;
     vcurr.y = vcurr_in.y;
     vcurr.z = vcurr_in.z;
@@ -106,19 +98,20 @@ void vel_callback(const geometry_msgs::Vector3& vcurr_in)
 
 // Pre-declarations
 double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
-double findDistance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
-void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs);
+double findDistance(const geometry_msgs::Vector3& A, const obstacle& obs);
+void checkSeeable(const std::vector<obstacle>& real_obs_list, const std::vector<obstacle>& trans_obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs);
 Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane);
 geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& t);
 bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs);
 geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane);
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane);
-void buildObstacles(std::vector<obstacle>& full_obs_list);
+void buildRealObstacles(std::vector<obstacle>& real_obs_list);
+void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list);
 double determ(const Eigen::MatrixXf& A);
 double joyError = 0.01;
+
 // Main
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     // ROS Initialization
     ros::init(argc, argv, "Projection_Node");
     ros::NodeHandle node;
@@ -127,7 +120,6 @@ int main(int argc, char** argv)
     // ROS publishers
     ros::Publisher  pdes_new_pub;
     pdes_new_pub = node.advertise<geometry_msgs::Vector3>("new_desired_position", 1);
-
 
     // ROS subscribers
     ros::Subscriber pdes_old_sub;
@@ -138,36 +130,34 @@ int main(int argc, char** argv)
     vcurr_sub = node.subscribe("current_velocity", 1, vel_callback);
 
     // Obstacle list (full)
-    std::vector<obstacle> full_obs_list;
-    buildObstacles(full_obs_list);
+    std::vector<obstacle> real_obs_list; // real walls
+    buildRealObstacles(real_obs_list);
+	//buildTranslatedObstacles(real_obs_list);	
+	std::vector<obstacle> full_obs_list; // translated walls
+	buildTranslatedObstacles(full_obs_list);
     
     double t_min = 2.0;
     int t_argmin;
-    // loop
-    while(ros::ok()) {
+    while(ros::ok()) { // loop
         ros::spinOnce();
-		std::vector<obstacle> seeable_obs;              // declaration of list of seeable obstacles
+		std::vector<obstacle> seeable_obs;
         bool imminentCollision = false;                 // Set imminent collision to false initially
-        check_seeable(full_obs_list,pcurr,seeable_obs); // Check normals to populate seeable obstacle list
+        checkSeeable(real_obs_list,full_obs_list,pcurr,seeable_obs); // Check normals to populate seeable obstacle list
+		//ROS_INFO("Full Obstacle %d", full_obs_list.size());
+		//ROS_INFO("Seeable Obstacle %d", seeable_obs.size());
         pdes_new.x = pdes_old.x;                        // Setting new pdes to the old one, will be updated if necessary
         pdes_new.y = pdes_old.y;
         pdes_new.z = pdes_old.z;
-	    if (seeable_obs.size() > 0)                     // Check if there are seeable obstacles
-	    {
-	        while(true)
-	        {
-				/* There is still some bug in this part of the code as expected. All compiles and will run from launch file. When I give it just an x or y input when there is no collision it seems to work alright. However, when I give a z command it gives an X and Z command in the e36 order magnitude which obviously is incorrect for a new desired position. NO CLUE what is wrong but just giving an update.... - Daman */
+	    if (seeable_obs.size() > 0) {                    // Check if there are seeable obstacles
+	        while(true) {
+				t_min = 3.0;
 				imminentCollision = false;
 	            imminentCollision = checkIntersection(pcurr,pdes_new,seeable_obs);
-	            if (imminentCollision)                      // Check if imminent collision
-	            {
-					ROS_INFO("Collision!!!!!!!!!");
-	                for(int i = 0; i < seeable_obs.size(); i++)
-	                {
-	                    if(seeable_obs[i].t < 2.0)
-	                    {
-	                        if(seeable_obs[i].t < t_min)
-	                        {
+	            if (imminentCollision) {                      // Check if imminent collision
+					ROS_INFO("Collision");
+	                for(int i = 0; i < seeable_obs.size(); i++) {
+	                    if(seeable_obs[i].t < 2.0) {
+	                        if(seeable_obs[i].t < t_min) {
 	                            t_min = seeable_obs[i].t;
 	                            t_argmin = i;
 	                        }
@@ -178,16 +168,14 @@ int main(int argc, char** argv)
 	                geometry_msgs::Vector3 project;
 	                project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
 	                double dist;
-	                dist = findDistance(pcurr, projectOntoPlane(pcurr,seeable_obs[t_argmin]));
+	                dist = findDistance(pcurr, seeable_obs[t_argmin]); //projectOntoPlane(pcurr,seeable_obs[t_argmin]));
 	                pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
-					for(int i = 0; i < seeable_obs.size(); i++)
-					{
+					for(int i = 0; i < seeable_obs.size(); i++) {
 						seeable_obs[i].t = 20.0;
 					}
 	            }
-	            else
-				{
-					//ROS_INFO("NO Collision");
+	            else {
+					ROS_INFO("NO Collision");
 	                break;
 				}
 	        }
@@ -199,33 +187,30 @@ int main(int argc, char** argv)
 }
 
 // function to find dot product of two geometry_msgs::Vector3's
-double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
-{
+double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B) {
     return A.x*B.x + A.y*B.y + A.z*B.z;
 }
 
 // Returns distance betweent wo points
-double findDistance(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B)
-{
-    return std::sqrt(std::pow((A.x-B.x),2)+std::pow((A.y-B.y),2)+std::pow((A.z-B.z),2));
+double findDistance(const geometry_msgs::Vector3& pc, const obstacle& obs) {
+	geometry_msgs::Vector3 p;
+	p = pc - obs.vertices[0];
+	return dot(p,obs.normal);
 }
 
 // Checks if an obstacle is see-able
-void check_seeable(const std::vector<obstacle>& obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs)
-{
+void checkSeeable(const std::vector<obstacle>& real_obs_list, const std::vector<obstacle>& trans_obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs) {
     geometry_msgs::Vector3 AB;
-    for(int i = 0; i <  obs_list.size(); i++)
+    for(int i = 0; i <  real_obs_list.size(); i++)
     {   
-        AB = pcurr - obs_list[i].vertices[0];
-        if (dot(AB,obs_list[i].normal) > 0)
-            see_obs.push_back(obs_list[i]);
+        AB = pcurr - real_obs_list[i].vertices[0];
+        if (dot(AB,real_obs_list[i].normal) > 0)
+            see_obs.push_back(trans_obs_list[i]);
     }
 }
 
 // Solve for t,u,v for intersection
-Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane)
-{
-	// BUG PROBABLY HERE!!!!!!!!! GETTING NaN or intersections where we shouldn't
+Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane) {
     Eigen::Matrix3f A;
     Eigen::Vector3f b;
 	Eigen::Vector3f Answer;
@@ -243,26 +228,20 @@ Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geo
 	b(2) = pcurr.z - plane.vertices[0].z;
 	if(A.determinant() < 0.001 && A.determinant() > -0.001)
 	{
-		//ROS_INFO("Singular");
 		Answer(0) = 5.0; Answer(1) = 5.0; Answer(2) = 5.0;
 		return Answer;
 	}
 	Answer = A.inverse()*b;
-	//ROS_INFO("t = %f, u = %f, v = %f", Answer(0), Answer(1), Answer(2));
-	//ROS_INFO("Not Singular");
 	return Answer;
 }
 
-
 // Find the point a line intersects with a plane
-geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& t)
-{
-    return pcurr + t(0)*(pdes - pcurr);
+geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const Eigen::Vector3f& tuv) {
+    return pcurr + tuv(0)*(pdes - pcurr);
 }
 
 // Checks for an intersection between current position and desired position for all seeable obstacles
-bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs)
-{
+bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs) {
     Eigen::Vector3f x;
     for(int i = 0; i < see_obs.size(); i++)
     {
@@ -272,79 +251,296 @@ bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs:
             see_obs[i].t = x(0);
             return true;
         }
+		/*else if(x(0) >= -1.0 && x(0) <= 0.0 && x(1) <= 1.0 && x(1) >= 0.0 && x(2) <= 1.0 && x(2) >= 0.0 && x(1)+x(2) <= 1.0 && dot(pcurr-see_obs[i].vertices[0],see_obs[i].normal)<0.0)
+		{
+            see_obs[i].t = x(0);
+            return true;
+        }*/
     }
     return false;
 }
 
 // Projects a point onto a given plane through it's normal vector
-geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane)
-{
+geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& pdes, const obstacle& plane) {
     geometry_msgs::Vector3 p0;
     double D;
-    p0 = p - plane.vertices[0];
+    p0 = pdes - plane.vertices[0];
     D = dot(p0,plane.normal);
-    return p0 - D*plane.normal;
+	return pdes - D*plane.normal;
 }
     
 // Finds a point on the line proportional to the intersection or projection point.
-geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane)
-{
+geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane) {
     float d = 1.0;
-	float f = 1.5;
-	float K = 0.5;
+	float f = 0.5;
 	float v;
-	if((f-0.4) < dot(vcurr,plane.normal))
+
+	/*if((f-0.4) < dot(vcurr,plane.normal))
 		v = f-0.4;
 	else
-		v = dot(vcurr,plane.normal);
+		v = dot(vcurr,plane.normal);*/
+
     geometry_msgs::Vector3 P;
     if (D<d) 
         P = ((d-D)/d) * (project - intersect) + intersect;
     else
         P = intersect;
-	//return P + f*plane.normal;
-    return P + (f - v)*plane.normal;
+
+	return P + f*plane.normal;
+    //return P + (f - v)*plane.normal;
 }
 
 // Builds full list of obstacles
-void buildObstacles(std::vector<obstacle>& full_obs_list)
-{
+void buildRealObstacles(std::vector<obstacle>& full_obs_list) {
+	// Build list of obstacles here.
+	double width = 3.96;    // Width of enclosure (m)
+	double height = 3.5;   // Height of enclosure (m)
+	double length = 6.85;   // Length of enclosure (m)
+	//double length = 6.0;
+	double radius = 0.0;   // Radius of quad sphere (m)
+	//radius = 3.0*radius;
+	double offset = 0.0;
+	obstacle newObs;
+	geometry_msgs::Vector3 vertex;
+	// Wall by computers
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	// Wall to right of computers
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	// Wall to left of computers
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius+offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	// Wall opposite computers
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = height-radius-offset;
+	newObs.vertices[1] = vertex;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
+	vertex.z = 0.0+radius+offset;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	// Floor
+	vertex.x = -width/2.0+radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 1.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = width/2.0-radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = 0.0+radius;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 1.0;
+	full_obs_list.push_back(newObs);
+	// Ceiling
+	vertex.x = -width/2.0+radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = height - radius;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = height - radius;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = height - radius;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = -1.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = width/2.0-radius;
+	vertex.y = -length/2.0+radius;
+	vertex.z = height - radius;
+	newObs.vertices[0] = vertex;
+	vertex.x = width/2.0-radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = height - radius;
+	newObs.vertices[1] = vertex;
+	vertex.x = -width/2.0+radius;
+	vertex.y = length/2.0-radius;
+	vertex.z = height - radius;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = -1.0;
+	full_obs_list.push_back(newObs);
+}
+
+// Builds full list of obstacles
+void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list) {
 	// Build list of obstacles here.
 	double width = 3.96;    // Width of enclosure (m)
 	double height = 3.5;   // Height of enclosure (m)
 	double length = 6.85;   // Length of enclosure (m)
 	//double length = 6.0;
 	double radius = 0.559/2.0;   // Radius of quad sphere (m)
-	radius = 1.5*radius;
+	//radius = 1.5*radius;
+	double offset = 0.5;
 	obstacle newObs;
 	geometry_msgs::Vector3 vertex;
 	// Wall by computers
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 1.0;
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
@@ -352,32 +548,32 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
 	// Wall to right of computers
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = -1.0;
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
-	vertex.x = width/2.0-radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = height-radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = -1.0;
@@ -385,32 +581,32 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
 	// Wall to left of computers
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius+offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 1.0;
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
-	vertex.x = -width/2.0+radius;
-	vertex.y = -length/2.0+radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = -length/2.0+radius+offset;
 	vertex.z = height-radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = height-radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 1.0;
@@ -418,32 +614,32 @@ void buildObstacles(std::vector<obstacle>& full_obs_list)
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
 	// Wall opposite computers
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = height-radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = -1.0;
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
-	vertex.x = -width/2.0+radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = -width/2.0+radius+offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = height-radius;
 	newObs.vertices[0] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = height-radius;
 	newObs.vertices[1] = vertex;
-	vertex.x = width/2.0-radius;
-	vertex.y = length/2.0-radius;
+	vertex.x = width/2.0-radius-offset;
+	vertex.y = length/2.0-radius-offset;
 	vertex.z = 0.0+radius;
 	newObs.vertices[2] = vertex;
 	newObs.normal.x = 0.0;

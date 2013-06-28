@@ -79,9 +79,14 @@
 		<rosparam param="cov/imu_or">[1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 100000.0]</rosparam>
 </node>
 
-<!--<node pkg="rxtools" type="rxplot" name="Battery_Monitor" args="/ardrone/navdata/batteryPercent"/>-->
-<!--<node pkg="rxtools" type="rxplot" name="User_Monitor" args = "-t 'Desired Position Before and After Projection'
-	-l BX, BY, BZ, AX, AY, AZ -b 10 /desired_position.x,/desired_position.y,/desired_position.z,/new_desired_position.x,/new_desired_position.y,/new_desired_position.z"/>-->
+<!--<node pkg="rxtools" type="rxplot" output="screen" name="rxplot" args="-t 'Debug Information' 
+	-l m1,m2,m3,m4,Batt
+	-b 100 /ardrone/navdata/motor1,/ardrone/navdata/motor2,/ardrone/navdata/motor3,/ardrone/navdata/motor4 /ardrone/navdata/batteryPercent" respawn="true" />-->
+
+<!-- <node pkg="rxtools" type="rxplot" name="Battery_Monitor" args="/ardrone/navdata/batteryPercent"/>-->
+<!--<node pkg="rxtools" type="rxplot" name="rxplot" args = "-t 'Desired Position Before and After Projection'
+	-l BX,BY,BZ,AX,AY,AZ 
+	-b 10 /desired_position.x,/desired_position.y,/desired_position.z,/new_desired_position.x,/new_desired_position.y,/new_desired_position.z" respawn="true"/>-->
 <node pkg="rxtools" type="rxplot" name="User_Monitor" args = "-t 'Desired Position Before and After Projection' /desired_position.x,/desired_position.y,/desired_position.z,/new_desired_position.x,/new_desired_position.y,/new_desired_position.z"/>
 
 </launch>
