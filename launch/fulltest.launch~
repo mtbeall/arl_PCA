@@ -27,8 +27,10 @@
 		<param name="bitrate" value="4000" />
 		<param name="altitude_max" value="5000" />
 		<param name="altitude_min" value="500" />
-		<param name="euler_angle_max" value="0.136" />
-		<param name="euler_angle_max" value="0.09" /> 
+<!--		<param name="euler_angle_max" value="0.136" />-->
+<!--		<param name = "euler_angle_max" value = "0.785" /> -->
+		<param name = "euler_angle_max" value = "0.5" /> 
+<!--		<param name="euler_angle_max" value="0.09" />  -->
 		<param name="control_vz_max" value="2000" /> 
 		<param name="control_yaw" value="1.75" />
 		<param name="navdata_demo" value="FALSE" /> 

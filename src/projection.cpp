@@ -609,7 +609,7 @@ void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list) {
 	full_obs_list.push_back(newObs);
 	
 	// Wall opposite computers
-	offset = 1.75+radius;
+	offset = 1.5+radius;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = -1.0;
 	newObs.normal.z = 0.0;
@@ -641,7 +641,7 @@ void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list) {
 	full_obs_list.push_back(newObs);
 	
 	// Floor
-	offset = 0.25;
+	offset = 0.50+radius;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 1.0;

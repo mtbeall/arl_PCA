@@ -20,7 +20,7 @@
 // Variable initialization
 double joy_x_,joy_y_,joy_z_;
 double joy_x,joy_y,joy_z;
-double tau = 2.0;
+double tau = 1.25;
 double dt = 1.0/50.0;
 int t = (int) tau/dt;
 double dead_zone = 0.1;
@@ -91,7 +91,7 @@ Eigen::VectorXf x(xdim);
 
 // Pre-Declarations
 void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B);
-void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const int& t);
+void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const double& t);
 Eigen::MatrixXf power(const Eigen::MatrixXf& M, const int& power);
 void scaleU(Eigen::VectorXf& u);
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
     // Set A,B,F,G matrices for a given number of time steps, t.
     setDynamics(A,B);
-    findFG(A,B,F,G,t);
+    findFG(A,B,F,G,tau);
 
     // Loop
     while(ros::ok()) 
@@ -171,60 +171,42 @@ void scaleU(Eigen::VectorXf& u) {
 // Stores A and B matrices
 void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B)
 {
-	A << 0,0,0,1,0,0,0,0,0,0,0,0,
-   		 0,0,0,0,1,0,0,0,0,0,0,0,
-		 0,0,0,0,0,1,0,0,0,0,0,0,
-		 0,0,0,-0.25,0,0,0,9.812,0,0,0,0,
-		 0,0,0,0,-0.25,0,-9.812,0,0,0,0,0,
-		 0,0,0,0,0,-0.25,0,0,0,0,0,0,
-		 0,0,0,0,0,0,0,0,0,1,0,0,
-		 0,0,0,0,0,0,0,0,0,0,1,0,
-		 0,0,0,0,0,0,0,0,0,0,0,1,
-		 0,0,0,0,0,0,-750.0,0,0,-54.7723,0,0,
-		 0,0,0,0,0,0,0,-750.0,0,0,-54.7723,0,
-		 0,0,0,0,0,0,0,0,0,0,0,-0.1;
-	B << 0,0,0,
-		 0,0,0,
-		 0,0,0,
-		 0,0,0,
-		 0,0,0,
-		 2.381,0,0,
-		 0,0,0,
-		 0,0,0,
-		 0,0,0,
-		 0,750.0,0,
-		 0,0,750.0,
-		 0,0,0;
+	A<<	0,0,0,1,0,0,0,0,0,0,0,0,
+	0,0,0,0,1,0,0,0,0,0,0,0,
+	0,0,0,0,0,1,0,0,0,0,0,0,
+	0,0,0,-0.25,0,0,0,9.812,0,0,0,0,
+	0,0,0,0,-0.25,0,-9.812,0,0,0,0,0,
+	0,0,0,0,0,-0.25,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,1,0,0,
+	0,0,0,0,0,0,0,0,0,0,1,0,
+	0,0,0,0,0,0,0,0,0,0,0,1,
+	0,0,0,0,0,0,-1000,0,0,-63.246,0,0,
+	0,0,0,0,0,0,0,-1000,0,0,-63.246,0,
+	0,0,0,0,0,0,0,0,0,0,0,-0.1;
+	 
+	B<<	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	2.381,0,0,
+	0,0,0,
+	0,0,0,
+	0,0,0,
+	0,1000,0,
+	0,0,1000,
+	0,0,0;
 }
 
 // Calculates and stores F,G matrices for a given number of time steps t
-void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const int& t)
+void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const double& t)
 {
-F<<1,0,0,0.47001,0,0,0,0.26542,0,0,0.0040576,0,
-0,1,0,0,0.47001,0,-0.26542,0,0,-0.0040576,0,0,
-0,0,1,0,0,0.47001,0,0,0,0,0,0,
-0,0,0,0.8825,0,0,0,0.55421,0,0,0.0087976,0,
-0,0,0,0,0.8825,0,-0.55421,0,0,-0.0087976,0,0,
-0,0,0,0,0,0.8825,0,0,0,0,0,0,
-0,0,0,0,0,0,2.2846e-06,0,0,6.7947e-08,0,0,
-0,0,0,0,0,0,0,2.2846e-06,0,0,6.7947e-08,0,
-0,0,0,0,0,0,0,0,1,0,0,0.48771,
-0,0,0,0,0,0,-6.7947e-05,0,0,-2.0128e-06,0,0,
-0,0,0,0,0,0,0,-6.7947e-05,0,0,-2.0128e-06,0,
-0,0,0,0,0,0,0,0,0,0,0,0.95123;
- 
-G<<0,0,0.91153,
-0,-0.91153,0,
-0.2856,0,0,
-0,0,4.0576,
-0,-4.0576,0,
-1.1191,0,0,
-0,1,0,
-0,0,1,
-0,0,0,
-0,6.7947e-05,0,
-0,0,6.7947e-05,
-0,0,0;
+	Eigen::MatrixXf AB(xdim+udim,xdim+udim);
+	AB << A, B, Eigen::MatrixXf::Constant(udim,xdim+udim, 0.0);
+	AB = t*AB;
+	AB = AB.exp();
+	F << AB.topLeftCorner(xdim,xdim);
+	G << AB.topRightCorner(xdim,udim);
 }
 
 // Power function. Eigen .pow() only works for static matrices not dynamic matrices
