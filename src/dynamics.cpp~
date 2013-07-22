@@ -93,6 +93,7 @@ Eigen::VectorXf x(xdim);
 void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B);
 void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const int& t);
 Eigen::MatrixXf power(const Eigen::MatrixXf& M, const int& power);
+void scaleU(Eigen::VectorXf& u);
 
 // Main Loop
 int main(int argc, char** argv)
@@ -141,6 +142,8 @@ int main(int argc, char** argv)
 		if(u[2] < dead_zone && u[2] > -dead_zone)
 			u[2] = 0.0;
 
+		//scaleU(u);
+
         // Set x0
         x0[0] = pcurr.x; x0[1] = pcurr.y; x0[2] = pcurr.z;
         x0[3] = vcurr.x; x0[4] = vcurr.y; x0[5] = vcurr.z;
@@ -156,6 +159,14 @@ int main(int argc, char** argv)
         loop_rate.sleep();
     }
 }
+
+void scaleU(Eigen::VectorXf& u) {
+	double scale = 0.25;
+	for(int i = 0; i < udim; i++) {
+		u[i] = u[i]*scale;
+	}
+}
+
 
 // Stores A and B matrices
 void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B)
@@ -189,30 +200,30 @@ void setDynamics(Eigen::MatrixXf& A, Eigen::MatrixXf& B)
 // Calculates and stores F,G matrices for a given number of time steps t
 void findFG(const Eigen::MatrixXf& A, const Eigen::MatrixXf& B, Eigen::MatrixXf& F, Eigen::MatrixXf& G, const int& t)
 {
-F<<1,0,0,0.51386,0,0,0,1.389,0,0,0.20089,0,
-0,1,0,0,0.51386,0,-1.389,0,0,-0.20089,0,0,
-0,0,1,0,0,0.51386,0,0,0,0,0,0,
-0,0,0,0.87153,0,0,0,4.8411,0,0,0.98718,0,
-0,0,0,0,0.87153,0,-4.8411,0,0,-0.98718,0,0,
-0,0,0,0,0,0.87153,0,0,0,0,0,0,
-0,0,0,0,0,0,0.89427,0,0,0.31732,0,0,
-0,0,0,0,0,0,0,0.89427,0,0,0.31732,0,
-0,0,0,0,0,0,0,0,1,0,0,0.53515,
-0,0,0,0,0,0,-0.31732,0,0,0.25963,0,0,
-0,0,0,0,0,0,0,-0.31732,0,0,0.25963,0,
-0,0,0,0,0,0,0,0,0,0,0,0.94649;
+F<<1,0,0,0.47001,0,0,0,0.26542,0,0,0.0040576,0,
+0,1,0,0,0.47001,0,-0.26542,0,0,-0.0040576,0,0,
+0,0,1,0,0,0.47001,0,0,0,0,0,0,
+0,0,0,0.8825,0,0,0,0.55421,0,0,0.0087976,0,
+0,0,0,0,0.8825,0,-0.55421,0,0,-0.0087976,0,0,
+0,0,0,0,0,0.8825,0,0,0,0,0,0,
+0,0,0,0,0,0,2.2846e-06,0,0,6.7947e-08,0,0,
+0,0,0,0,0,0,0,2.2846e-06,0,0,6.7947e-08,0,
+0,0,0,0,0,0,0,0,1,0,0,0.48771,
+0,0,0,0,0,0,-6.7947e-05,0,0,-2.0128e-06,0,0,
+0,0,0,0,0,0,0,-6.7947e-05,0,0,-2.0128e-06,0,
+0,0,0,0,0,0,0,0,0,0,0,0.95123;
  
-G<<0,0,0.029362,
-0,-0.029362,0,
-0.34417,0,0,
-0,0,0.20089,
-0,-0.20089,0,
-1.2235,0,0,
-0,0.10573,0,
-0,0,0.10573,
+G<<0,0,0.91153,
+0,-0.91153,0,
+0.2856,0,0,
+0,0,4.0576,
+0,-4.0576,0,
+1.1191,0,0,
+0,1,0,
+0,0,1,
 0,0,0,
-0,0.31732,0,
-0,0,0.31732,
+0,6.7947e-05,0,
+0,0,6.7947e-05,
 0,0,0;
 }
 
