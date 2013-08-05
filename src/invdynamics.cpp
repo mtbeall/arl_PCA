@@ -11,6 +11,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <sensor_msgs/Joy.h>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <std_msgs/Float32.h>
 
 // Defines
 #define xdim 12
@@ -18,7 +19,8 @@
 #define pdim 3
 
 // Time-related variables
-double tau = 1.25;
+// double tau = 1.25;
+double tau;
 //double dt = 1.0/50.0;
 //int t = (int) tau/dt;
 
@@ -30,6 +32,10 @@ geometry_msgs::Vector3 vcurr;
 geometry_msgs::Vector3 u_out;
 geometry_msgs::Vector3 rcurr;
 geometry_msgs::Vector3 rdotcurr;
+
+/*void tau_callback(const std_msgs::Float32& tau_in) {
+	tau = tau_in.data;
+}*/
 
 // Read position from mocap
 void pos_callback(const geometry_msgs::Vector3& pos_in)
@@ -101,6 +107,11 @@ int main(int argc, char** argv)
     ros::NodeHandle node;
     ros::Rate loop_rate(50);
 
+	if(node.getParam("/current_tau", tau)) {;}
+	else {
+		ROS_ERROR("NO TAU!!!!!!!!!");
+	}
+
     // ROS publisher
     ros::Publisher u_pub;
     u_pub = node.advertise<geometry_msgs::Vector3>("new_u",1);
@@ -118,6 +129,10 @@ int main(int argc, char** argv)
 	rcurr_sub = node.subscribe("current_r",1,r_callback);
 	ros::Subscriber rdotcurr_sub;
 	rdotcurr_sub = node.subscribe("current_rdot",1,rdot_callback);
+	/*ros::Subscriber tau_sub;
+	tau_sub = node.subscribe("current_tau", 1, tau_callback);
+
+	ros::spinOnce();*/
 
     // Maps state to position
     P = Eigen::MatrixXf::Zero(pdim,xdim);

@@ -8,6 +8,7 @@
 <node pkg="arl_PCA" type="mocap" name="Mocap" respawn="true" />
 <node pkg="joy" type="joy_node" name="Xbox_Controller" args="/dev/input/js0" respawn="true"/>
 
+<param name = "current_tau" value = "1.75" />
 <node pkg="arl_PCA" type="fwddynamics" name="Forward_Dynamics" respawn="true" />
 
 <node pkg="arl_PCA" type="projection" name="Project" respawn="true" output="screen" />
@@ -29,7 +30,7 @@
 		<param name="altitude_min" value="500" />
 <!--		<param name="euler_angle_max" value="0.136" />-->
 <!--		<param name = "euler_angle_max" value = "0.785" /> -->
-		<param name = "euler_angle_max" value = "0.5" /> 
+		<param name = "euler_angle_max" value = "0.4" /> 
 <!--		<param name="euler_angle_max" value="0.09" />  -->
 		<param name="control_vz_max" value="2000" /> 
 		<param name="control_yaw" value="1.75" />

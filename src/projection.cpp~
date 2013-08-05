@@ -96,6 +96,9 @@ void vel_callback(const geometry_msgs::Vector3& vcurr_in) {
 
 // Pre-declarations
 double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
+
+geometry_msgs::Vector3 cross(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B);
+
 double findDistance(const geometry_msgs::Vector3& A, const obstacle& obs);
 void checkSeeable(const std::vector<obstacle>& real_obs_list, const std::vector<obstacle>& trans_obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs);
 Eigen::Vector3f solveIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, const obstacle& plane);
@@ -103,6 +106,20 @@ geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const 
 bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs);
 geometry_msgs::Vector3 projectOntoPlane(const geometry_msgs::Vector3& p, const obstacle& plane);
 geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, const geometry_msgs::Vector3& project, const double& D, const obstacle& plane);
+
+
+void translate(std::vector<geometry_msgs::Vector3>& obsVerts, geometry_msgs::Vector3 trans);
+void rotY(std::vector<geometry_msgs::Vector3>& obsVerts, double angle);
+void rotZ(std::vector<geometry_msgs::Vector3>& obsVerts, double angle);
+void createTriPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, double l);
+void buildTriPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts);
+void createRectPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double h, double w, double l);
+void buildRectPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts);
+void createHexPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, double l);
+void buildHexPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts);
+std::vector<geometry_msgs::Vector3> expandPrism(const std::vector<geometry_msgs::Vector3>& obsVerts, double buffer);
+void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle>& full_obs_list);
+
 void buildRealObstacles(std::vector<obstacle>& real_obs_list);
 void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list);
 double determ(const Eigen::MatrixXf& A);
@@ -129,12 +146,13 @@ int main(int argc, char** argv) {
 
     // real obstacle list
     std::vector<obstacle> real_obs_list;
-    buildRealObstacles(real_obs_list);
+    std::vector<obstacle> full_obs_list;
 
-	// translated obstacle list
-	std::vector<obstacle> full_obs_list;
-	buildTranslatedObstacles(full_obs_list);
-    
+    buildRealObstacles(real_obs_list);
+    // translated obstacle list
+    buildTranslatedObstacles(full_obs_list);
+    buildInternalObs(real_obs_list, full_obs_list);
+        
 
     double t_min = 2.0;
     int t_argmin;
@@ -156,7 +174,7 @@ int main(int argc, char** argv) {
 	            imminentCollision = checkIntersection(pcurr,pdes_new,seeable_obs);
 	            if (imminentCollision) {                      // Check if imminent collision
 					//ROS_INFO("Collision");
-	                for(int i = 0; i < seeable_obs.size(); i++) {
+	                for(unsigned int i = 0; i < seeable_obs.size(); i++) {
                         if(seeable_obs[i].t < t_min) {
                             t_min = seeable_obs[i].t;
                             t_argmin = i;
@@ -168,7 +186,7 @@ int main(int argc, char** argv) {
 	                project = projectOntoPlane(pdes_new,seeable_obs[t_argmin]);
 	                double dist = findDistance(pcurr, seeable_obs[t_argmin]); //projectOntoPlane(pcurr,seeable_obs[t_argmin]));
 	                pdes_new = averageProject(intersect, project, dist, seeable_obs[t_argmin]); 
-					for(int i = 0; i < seeable_obs.size(); i++) {
+					for(unsigned int i = 0; i < seeable_obs.size(); i++) {
 						seeable_obs[i].t = 120.0;
 					}
 	            }
@@ -190,6 +208,15 @@ double dot(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B) {
     return A.x*B.x + A.y*B.y + A.z*B.z;
 }
 
+// function to find cross product of two geometry_msgs::Vector3's
+geometry_msgs::Vector3 cross(const geometry_msgs::Vector3& A, const geometry_msgs::Vector3& B) {
+	geometry_msgs::Vector3 answer;
+	answer.x = A.y*B.z - A.z*B.y;
+	answer.y = A.z*B.x - A.x*B.z;
+	answer.z = A.x*B.y - A.y*B.x;
+	return answer;
+}
+
 // Returns distance between two points
 double findDistance(const geometry_msgs::Vector3& pc, const obstacle& obs) {
 	geometry_msgs::Vector3 p;
@@ -201,7 +228,7 @@ double findDistance(const geometry_msgs::Vector3& pc, const obstacle& obs) {
 // Checks if an obstacle is see-able
 void checkSeeable(const std::vector<obstacle>& real_obs_list, const std::vector<obstacle>& trans_obs_list, const geometry_msgs::Vector3& pcurr, std::vector<obstacle>& see_obs) {
     geometry_msgs::Vector3 AB;
-    for(int i = 0; i <  real_obs_list.size(); i++)
+    for(unsigned int i = 0; i <  real_obs_list.size(); i++)
     {   
         AB = pcurr - real_obs_list[i].vertices[0];
         if (dot(AB,real_obs_list[i].normal) > 0.0)
@@ -243,7 +270,7 @@ geometry_msgs::Vector3 intersectLine(const geometry_msgs::Vector3& pcurr, const 
 bool checkIntersection(const geometry_msgs::Vector3& pcurr, const geometry_msgs::Vector3& pdes, std::vector<obstacle>& see_obs) {
     Eigen::Vector3f x;
 	bool flag = false;
-    for(int i = 0; i < see_obs.size(); i++)
+    for(unsigned int i = 0; i < see_obs.size(); i++)
     {
         x = solveIntersection(pcurr, pdes, see_obs[i]);
         if(x(0) <= 1.0 && x(0) >= 0.0 && x(1) <= 1.0 && x(1) >= 0.0 && x(2) <= 1.0 && x(2) >= 0.0 && x(1)+x(2) <= 1.0 && dot(pcurr-see_obs[i].vertices[0],see_obs[i].normal)>0.0)
@@ -285,6 +312,832 @@ geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, c
 
 	return P + f*plane.normal;
 }
+
+
+
+//Matt Beall
+//takes a list of vertices that represent any internal obstacle and translates them as per the trans vector
+void translate(std::vector<geometry_msgs::Vector3>& obsVerts, geometry_msgs::Vector3 trans){
+	for(unsigned int i = 0; i<obsVerts.size(); i++){
+		obsVerts[i].x += trans.x;
+		obsVerts[i].y += trans.y;
+		obsVerts[i].z += trans.z;
+	}
+}
+
+//takes a list of vertices that represent any internal obstacle and rotates them about the y axis by angle in rads
+void rotY(std::vector<geometry_msgs::Vector3>& obsVerts, double angle){
+	int numVerts = obsVerts.size();
+	geometry_msgs::Vector3 vertex;	
+	for(int i = 0; i < numVerts; i++){
+		vertex = obsVerts[i];
+		obsVerts[i].x = cos(angle)*vertex.x + sin(angle)*vertex.z;
+		obsVerts[i].y = vertex.y;
+		obsVerts[i].z = -sin(angle)*vertex.x + cos(angle)*vertex.z;
+	}
+}
+
+//takes a list of vertices that represent any internal obstacle and rotates them about the z axis by angle in rads
+void rotZ(std::vector<geometry_msgs::Vector3>& obsVerts, double angle){
+	int numVerts = obsVerts.size();
+	geometry_msgs::Vector3 vertex;	
+	for(int i = 0; i < numVerts; i++){
+		vertex = obsVerts[i];
+		obsVerts[i].x = cos(angle)*vertex.x - sin(angle)*vertex.y;
+		obsVerts[i].y = sin(angle)*vertex.x + cos(angle)*vertex.y;
+		obsVerts[i].z = vertex.z;
+	}
+}
+
+// NO RESIZE
+//create a triangular prism shaped internal obstacle. creates a list of vertices to then be manipulated.
+void createTriPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, double l){
+	//Triangular Prism
+	//    0__________3
+	//   . .          . 
+	//  1__ 2_____4____5
+	//assumes equilateral. width is the triangle side (eg, 0-1) and length is the prism length (eg 0-3)
+	double h = w*sqrt(3.0)/2.0;
+	geometry_msgs::Vector3 vertex;
+	obsVerts.resize(6);
+
+	vertex.x = 0.0;
+	vertex.y = w/2.0;
+	vertex.z = h;
+	obsVerts[0] = vertex;
+
+	vertex.x = 0.0;
+	vertex.y = w;
+	vertex.z = 0.0;
+	obsVerts[1] = vertex;
+
+	vertex.x = 0.0;
+	vertex.y = 0.0;
+	vertex.z = 0.0;
+	obsVerts[2] = vertex;
+	
+	vertex.x = l;
+	vertex.y = w/2.0;
+	vertex.z = h;
+	obsVerts[3] = vertex;
+	
+	vertex.x = l;
+	vertex.y = w;
+	vertex.z = 0.0;
+	obsVerts[4] = vertex;
+	
+	vertex.x = l;
+	vertex.y = 0.0;
+	vertex.z = 0.0;
+	obsVerts[5] = vertex;
+	
+}
+
+// NO RESIZE
+//Takes a list of vertices that represent a triangular prism and turns them into triangle obstacles.
+void buildTriPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts){
+	
+	double mag;
+	obstacle newObs;
+	geometry_msgs::Vector3 vertex;
+	
+
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[1];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[4];
+	newObs.vertices[2] = obsVerts[1];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[3];
+	newObs.vertices[2] = obsVerts[4];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[5];
+	newObs.vertices[2] = obsVerts[3];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag; 
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[2];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[4];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[5];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[3];
+	newObs.vertices[1] = obsVerts[5];
+	newObs.vertices[2] = obsVerts[4];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+}
+
+//create a rectangular prism shaped internal obstacle. creates a list of vertices to then be manipulated.
+void createRectPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double h, double w, double l){
+	//Rect Prism
+	//   0___3 .....4 ___7
+	//  h|   |      .    |
+	//   1__ 2 .....5____6
+	//     w      l
+	geometry_msgs::Vector3 vertex;
+	//obsVerts.resize(8);
+
+	vertex.x = 0.0;
+	vertex.y = w;
+	vertex.z = h;
+	//obsVerts[0] = vertex;
+	obsVerts.push_back(vertex);
+
+	vertex.x = 0.0;
+	vertex.y = w;
+	vertex.z = 0.0;
+	//obsVerts[1] = vertex;
+	obsVerts.push_back(vertex);
+
+	vertex.x = 0.0;
+	vertex.y = 0.0;
+	vertex.z = 0.0;
+//	obsVerts[2] = vertex;
+	obsVerts.push_back(vertex);
+	
+	vertex.x = 0.0;
+	vertex.y = 0.0;
+	vertex.z = h;
+//	obsVerts[3] = vertex;
+	obsVerts.push_back(vertex);
+	
+	vertex.x = l;
+	vertex.y = w;
+	vertex.z = h;
+//	obsVerts[4] = vertex;
+	obsVerts.push_back(vertex);
+
+	vertex.x = l;
+	vertex.y = w;
+	vertex.z = 0.0;
+//	obsVerts[5] = vertex;
+	obsVerts.push_back(vertex);
+	
+	vertex.x = l;
+	vertex.y = 0.0;
+	vertex.z = 0.0;
+//	obsVerts[6] = vertex;
+	obsVerts.push_back(vertex);
+
+	vertex.x = l;
+	vertex.y = 0.0;
+	vertex.z = h;
+//	obsVerts[7] = vertex;
+	obsVerts.push_back(vertex);
+	
+}
+
+//Takes a list of vertices that represent a rectangular prism and turns them into triangle obstacles.
+void buildRectPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts){
+	
+	double mag;
+	obstacle newObs;
+	geometry_msgs::Vector3 vertex;
+	
+	//Side 1
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[1];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[2];
+	newObs.vertices[2] = obsVerts[3];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[1];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	//Panels
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[4];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[5];
+	newObs.vertices[2] = obsVerts[1];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[5];
+	newObs.vertices[2] = obsVerts[6];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[6];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[2];
+	newObs.vertices[1] = obsVerts[6];
+	newObs.vertices[2] = obsVerts[7];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[2];
+	newObs.vertices[1] = obsVerts[7];
+	newObs.vertices[2] = obsVerts[3];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[3];
+	newObs.vertices[1] = obsVerts[7];
+	newObs.vertices[2] = obsVerts[4];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[3];
+	newObs.vertices[1] = obsVerts[4];
+	newObs.vertices[2] = obsVerts[0];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	//Side 2
+	newObs.vertices[0] = obsVerts[4];
+	newObs.vertices[1] = obsVerts[7];
+	newObs.vertices[2] = obsVerts[6];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+	newObs.vertices[0] = obsVerts[4];
+	newObs.vertices[1] = obsVerts[6];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+}
+
+// NO RESIZE
+//create an equilateral hexagonal prism shaped internal obstacle. creates a list of vertices to then be manipulated.
+void createHexPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, double l){
+	//Hexagonal Prism
+	//assumes equilateral. width is the hexagon side (eg, 0-1) and length is the prism length (eg 0-6)
+	geometry_msgs::Vector3 vertex;
+	obsVerts.resize(12);
+
+	//side 1
+	vertex.x = 0.0;
+	vertex.y = w/2.0;
+	vertex.z = w*sqrt(3.0);
+	obsVerts[0] = vertex;
+
+	vertex.x = 0.0;
+	vertex.y = 0.0;
+	vertex.z = w*sqrt(3.0)/2.0;
+	obsVerts[1] = vertex;
+	
+	vertex.x = 0.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	obsVerts[2] = vertex;
+
+	vertex.x = 0.0;
+	vertex.y = 3.0*w/2.0;
+	vertex.z = 0.0;
+	obsVerts[3] = vertex;
+	
+	vertex.x = 0.0;
+	vertex.y = w*2.0;
+	vertex.z = w*sqrt(3.0)/2.0;
+	obsVerts[4] = vertex;
+	
+	vertex.x = 0.0;
+	vertex.y = 3.0*w/2.0;
+	vertex.z = w*sqrt(3.0);
+	obsVerts[5] = vertex;
+	
+	//side 2
+	vertex.x = l;
+	vertex.y = w/2.0;
+	vertex.z = w*sqrt(3.0);
+	obsVerts[6] = vertex;
+
+	vertex.x = l;
+	vertex.y = 0.0;
+	vertex.z = w*sqrt(3.0)/2.0;
+	obsVerts[7] = vertex;
+	
+	vertex.x = l;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	obsVerts[8] = vertex;
+
+	vertex.x = l;
+	vertex.y = 3.0*w/2.0;
+	vertex.z = 0.0;
+	obsVerts[9] = vertex;
+	
+	vertex.x = l;
+	vertex.y = w*2.0;
+	vertex.z = w*sqrt(3.0)/2.0;
+	obsVerts[10] = vertex;
+	
+	vertex.x = l;
+	vertex.y = 3.0*w/2.0;
+	vertex.z = w*sqrt(3.0);
+	obsVerts[11] = vertex;
+
+}
+
+//Takes a list of vertices that represent an equilateral hexagonal prism and turns them into triangle obstacles.
+void buildHexPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts){
+	
+	double mag;
+	obstacle newObs;
+	geometry_msgs::Vector3 vertex;
+	
+	//side 1
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[1];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[2];
+	newObs.vertices[2] = obsVerts[3];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[3];
+	newObs.vertices[2] = obsVerts[4];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[4];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	//Panels
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[6];
+	newObs.vertices[2] = obsVerts[7];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[0];
+	newObs.vertices[1] = obsVerts[7];
+	newObs.vertices[2] = obsVerts[1];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[7];
+	newObs.vertices[2] = obsVerts[8];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[1];
+	newObs.vertices[1] = obsVerts[8];
+	newObs.vertices[2] = obsVerts[2];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[2];
+	newObs.vertices[1] = obsVerts[8];
+	newObs.vertices[2] = obsVerts[9];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[2];
+	newObs.vertices[1] = obsVerts[9];
+	newObs.vertices[2] = obsVerts[3];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[3];
+	newObs.vertices[1] = obsVerts[9];
+	newObs.vertices[2] = obsVerts[10];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[3];
+	newObs.vertices[1] = obsVerts[10];
+	newObs.vertices[2] = obsVerts[4];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[4];
+	newObs.vertices[1] = obsVerts[10];
+	newObs.vertices[2] = obsVerts[11];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[4];
+	newObs.vertices[1] = obsVerts[11];
+	newObs.vertices[2] = obsVerts[5];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[5];
+	newObs.vertices[1] = obsVerts[11];
+	newObs.vertices[2] = obsVerts[6];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[5];
+	newObs.vertices[1] = obsVerts[6];
+	newObs.vertices[2] = obsVerts[0];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	//Side 2
+	newObs.vertices[0] = obsVerts[6];
+	newObs.vertices[1] = obsVerts[11];
+	newObs.vertices[2] = obsVerts[10];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[6];
+	newObs.vertices[1] = obsVerts[10];
+	newObs.vertices[2] = obsVerts[9];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[6];
+	newObs.vertices[1] = obsVerts[9];
+	newObs.vertices[2] = obsVerts[8];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+	
+	newObs.vertices[0] = obsVerts[6];
+	newObs.vertices[1] = obsVerts[8];
+	newObs.vertices[2] = obsVerts[7];
+	vertex = cross(newObs.vertices[1]-newObs.vertices[0],newObs.vertices[2]-newObs.vertices[0]);	
+	mag = sqrt( pow(vertex.x,2.0) + pow(vertex.y,2.0) + pow(vertex.z,2.0) );
+	newObs.normal.x = vertex.x/mag;
+	newObs.normal.y = vertex.y/mag;
+	newObs.normal.z = vertex.z/mag;
+	obs_list.push_back(newObs);
+
+}
+
+
+//takes a list of vertices that represent an internal obstacle (prism created with one of the prism functions
+//and expands the vertices out from the centroid of each side, and then along the length.
+std::vector<geometry_msgs::Vector3> expandPrism(const std::vector<geometry_msgs::Vector3>& obsVerts, double buffer){
+	
+	int numVerts, halfVerts;
+	double mag;
+	geometry_msgs::Vector3 vertex;
+	geometry_msgs::Vector3 center, center1, center2, norm1, norm2, diff;
+	std::vector<geometry_msgs::Vector3> obsVertsExpanded;
+	//obsVertsExpanded.resize(obsVerts.size());
+	center.x = 0.0;
+	center.y = 0.0;
+	center.z = 0.0;
+
+	center1.x = 0.0;
+	center1.y = 0.0;
+	center1.z = 0.0;
+
+	center2.x = 0.0;
+	center2.y = 0.0;
+	center2.z = 0.0;
+
+	numVerts = obsVerts.size();
+	halfVerts = numVerts/2;
+	for(int i = 0; i<halfVerts; i++){
+		center1 = center1 + obsVerts[i];
+	}
+
+	for(int i = halfVerts; i<numVerts;i++){
+		center2 = center2 + obsVerts[i];
+
+	}
+	center1.x = center1.x/halfVerts;
+	center1.y = center1.y/halfVerts;
+	center1.z = center1.z/halfVerts;
+	
+	center2.x = center2.x/halfVerts;
+	center2.y = center2.y/halfVerts;
+	center2.z = center2.z/halfVerts;
+	
+	center.x = (center1.x + center2.x)/2.0;
+	center.y = (center1.y + center2.y)/2.0;
+	center.z = (center1.z + center2.z)/2.0;
+	
+	norm1 = center1 - center;
+	mag = sqrt( pow(norm1.x,2.0) + pow(norm1.y,2.0) + pow(norm1.z,2.0) );
+	norm1.x = (buffer/2.0)*(norm1.x/mag);
+	norm1.y = (buffer/2.0)*(norm1.y/mag);
+	norm1.z = (buffer/2.0)*(norm1.z/mag);
+
+	norm2 = center2 - center;
+	mag = sqrt( pow(norm2.x,2.0) + pow(norm2.y,2.0) + pow(norm2.z,2.0) );
+	norm2.x = (buffer/2.0)*(norm2.x/mag);
+	norm2.y = (buffer/2.0)*(norm2.y/mag);
+	norm2.z = (buffer/2.0)*(norm2.z/mag);
+	
+	for(int i = 0; i<halfVerts; i++){
+		diff = obsVerts[i] - center1;
+		
+		mag = sqrt( pow(diff.x,2.0) + pow(diff.y,2.0) + pow(diff.z,2.0) );
+		diff.x = buffer*(diff.x/mag);
+		diff.y = buffer*(diff.y/mag);
+		diff.z = buffer*(diff.z/mag);
+		
+		//obsVertsExpanded[i] = obsVerts[i] + diff + norm1;
+		obsVertsExpanded.push_back(obsVerts[i] + diff + norm1);
+	}
+	
+	for(int i = halfVerts; i<numVerts; i++){
+		diff = obsVerts[i] - center2;
+		
+		mag = sqrt( pow(diff.x,2.0) + pow(diff.y,2.0) + pow(diff.z,2.0) );
+		diff.x = buffer*(diff.x/mag);
+		diff.y = buffer*(diff.y/mag);
+		diff.z = buffer*(diff.z/mag);
+		
+		//obsVertsExpanded[i] = obsVerts[i] + diff + norm2;
+		obsVertsExpanded.push_back(obsVerts[i] + diff + norm2);
+	}
+	return obsVertsExpanded;
+
+}
+//adds real internal obstacle to obs list
+void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle>& full_obs_list){
+	double angleY,angleZ, d, h, w, l;
+	std::vector<geometry_msgs::Vector3> obsVerts, obsVertsExpanded;
+	geometry_msgs::Vector3 vertex;
+	geometry_msgs::Vector3 trans;
+	obstacle newObs;	
+	
+	//Triangular Prism
+	/*
+	w = .6;
+	l =3.0;
+	//l = 2.0;	
+	trans.x = w/2.0;
+	trans.y = 0.0;
+	trans.z = 0.0;
+	angleY = -3.14159/2.0;
+	angleZ = 3.14159/2.0;
+	createTriPrism(obsVerts,w,l);
+	
+	rotY(obsVerts, angleY);
+	rotZ(obsVerts, angleZ);
+	translate(obsVerts,trans);
+	
+	buildTriPrism(real_obs_list, obsVerts);
+	*/
+
+	//Rectangular Prism
+	h = 0.3937;
+	w = 0.4572;
+	l = 3.0;
+	angleY = -3.14159/2.0;
+//	angleZ = 0.710909;
+	angleZ = 0.0;
+	
+	createRectPrism(obsVerts,h,w,l);
+	
+	trans.x = -l/2.0;
+	trans.y = -w/2.0;
+	trans.z = -h/2.0;
+	translate(obsVerts,trans);
+
+	rotY(obsVerts,angleY);
+	rotZ(obsVerts,angleZ);
+	
+	trans.x = 0.5;
+	trans.y = 0.0;
+	trans.z = l/2.0;
+	translate(obsVerts,trans);	
+	
+	buildRectPrism(real_obs_list, obsVerts);
+	
+	obsVertsExpanded = expandPrism(obsVerts, 0.3048);
+	
+	buildRectPrism(full_obs_list, obsVertsExpanded);
+
+	//Hexagonal Prism
+	/*d = .5;
+	w = d/sqrt(3.0);
+	l = 2;
+	angleY = -3.14159/2.0;
+	angleZ = 0.0;
+	trans.x = sqrt(3.0)/2.0;
+	trans.y = 0.0;
+	trans.z = 0.0;
+	
+	createHexPrism(obsVerts,w,l);
+	
+	rotY(obsVerts,angleY);
+	rotZ(obsVerts,angleZ);
+	translate(obsVerts,trans);
+	
+	buildHexPrism(real_obs_list, obsVerts);
+	
+	expandPrism(obsVerts,0.2);
+	
+	buildHexPrism(full_obs_list, obsVerts);
+	*/
+	
+	
+
+
+}
+//end Matt Beall
+
 
 // Builds full list of obstacles
 void buildRealObstacles(std::vector<obstacle>& full_obs_list) {
@@ -511,7 +1364,7 @@ void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list) {
 	/*double offsetX = 1.0;
 	double offsetY = 1.5;
 	double offsetZ = 0.5;*/
-	double offset = 0.75 + radius;
+	double offset = 1.0 + radius;
 	obstacle newObs;
 	geometry_msgs::Vector3 vertex;
 	
@@ -641,7 +1494,7 @@ void buildTranslatedObstacles(std::vector<obstacle>& full_obs_list) {
 	full_obs_list.push_back(newObs);
 	
 	// Floor
-	offset = 0.50+radius;
+	offset = 0.3+radius;
 	newObs.normal.x = 0.0;
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 1.0;

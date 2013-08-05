@@ -11,6 +11,7 @@
 #include <geometry_msgs/Vector3.h>
 #include <sensor_msgs/Joy.h>
 #include <unsupported/Eigen/MatrixFunctions>
+#include <std_msgs/Float32.h>
 
 // Defines
 #define xdim 12
@@ -20,7 +21,8 @@
 // Variable initialization
 double joy_x_,joy_y_,joy_z_;
 double joy_x,joy_y,joy_z;
-double tau = 1.25;
+//double tau = 1.25;
+double tau;
 double dt = 1.0/50.0;
 int t = (int) tau/dt;
 double dead_zone = 0.1;
@@ -30,6 +32,10 @@ geometry_msgs::Vector3 pcurr;
 geometry_msgs::Vector3 vcurr;
 geometry_msgs::Vector3 rcurr;
 geometry_msgs::Vector3 rdotcurr;
+
+/*void tau_callback(const std_msgs::Float32& tau_msg) {
+	tau = tau_msg.data;
+}*/
 
 // Read joystick positions from controller
 void joy_callback(const sensor_msgs::Joy& joy_msg_in)
@@ -103,6 +109,11 @@ int main(int argc, char** argv)
     ros::NodeHandle node;
     ros::Rate loop_rate(50);
 
+	if(node.getParam("/current_tau", tau)) {;}
+	else {
+		ROS_ERROR("NO TAU!!!!!!!!!");
+	}
+
     // ROS publishers
     ros::Publisher pdes_pub;
     pdes_pub = node.advertise<geometry_msgs::Vector3>("desired_position",1);
@@ -118,7 +129,11 @@ int main(int argc, char** argv)
 	rcurr_sub = node.subscribe("current_r",1,r_callback);
 	ros::Subscriber rdotcurr_sub;
 	rdotcurr_sub = node.subscribe("current_rdot",1,rdot_callback);
-	
+	/*ros::Subscriber tau_sub;
+	tau_sub = node.subscribe("current_tau",1,tau_callback);*/
+
+	//ros::spinOnce();
+
     // Maps state to position
     P = Eigen::MatrixXf::Zero(pdim,xdim);
     P(0,0) = 1; P(1,1) = 1; P(2,2) = 1;

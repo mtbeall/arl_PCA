@@ -1,0 +1,1 @@
+rosbag record -O tau_50.bag cmd_vel current_position current_r current_rdot current_velocity current_yaw desired_position new_desired_position new_u joy
