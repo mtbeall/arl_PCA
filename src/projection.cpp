@@ -318,7 +318,8 @@ geometry_msgs::Vector3 averageProject(const geometry_msgs::Vector3& intersect, c
 //Matt Beall
 //takes a list of vertices that represent any internal obstacle and translates them as per the trans vector
 void translate(std::vector<geometry_msgs::Vector3>& obsVerts, geometry_msgs::Vector3 trans){
-	for(unsigned int i = 0; i<obsVerts.size(); i++){
+	int numVerts = obsVerts.size();
+	for(unsigned int i = 0; i<numVerts; i++){
 		obsVerts[i].x += trans.x;
 		obsVerts[i].y += trans.y;
 		obsVerts[i].z += trans.z;
@@ -359,41 +360,40 @@ void createTriPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, dou
 	//assumes equilateral. width is the triangle side (eg, 0-1) and length is the prism length (eg 0-3)
 	double h = w*sqrt(3.0)/2.0;
 	geometry_msgs::Vector3 vertex;
-	obsVerts.resize(6);
-
+	
+	
 	vertex.x = 0.0;
 	vertex.y = w/2.0;
 	vertex.z = h;
-	obsVerts[0] = vertex;
+	obsVerts.push_back(vertex);
 
 	vertex.x = 0.0;
 	vertex.y = w;
 	vertex.z = 0.0;
-	obsVerts[1] = vertex;
+	obsVerts.push_back(vertex);
 
 	vertex.x = 0.0;
 	vertex.y = 0.0;
 	vertex.z = 0.0;
-	obsVerts[2] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = w/2.0;
 	vertex.z = h;
-	obsVerts[3] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = w;
 	vertex.z = 0.0;
-	obsVerts[4] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = 0.0;
 	vertex.z = 0.0;
-	obsVerts[5] = vertex;
+	obsVerts.push_back(vertex);
 	
 }
 
-// NO RESIZE
 //Takes a list of vertices that represent a triangular prism and turns them into triangle obstacles.
 void buildTriPrism(std::vector<obstacle>& obs_list,std::vector<geometry_msgs::Vector3>& obsVerts){
 	
@@ -492,54 +492,45 @@ void createRectPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double h, do
 	//   1__ 2 .....5____6
 	//     w      l
 	geometry_msgs::Vector3 vertex;
-	//obsVerts.resize(8);
 
 	vertex.x = 0.0;
 	vertex.y = w;
 	vertex.z = h;
-	//obsVerts[0] = vertex;
 	obsVerts.push_back(vertex);
 
 	vertex.x = 0.0;
 	vertex.y = w;
 	vertex.z = 0.0;
-	//obsVerts[1] = vertex;
 	obsVerts.push_back(vertex);
 
 	vertex.x = 0.0;
 	vertex.y = 0.0;
 	vertex.z = 0.0;
-//	obsVerts[2] = vertex;
 	obsVerts.push_back(vertex);
 	
 	vertex.x = 0.0;
 	vertex.y = 0.0;
 	vertex.z = h;
-//	obsVerts[3] = vertex;
 	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = w;
 	vertex.z = h;
-//	obsVerts[4] = vertex;
 	obsVerts.push_back(vertex);
 
 	vertex.x = l;
 	vertex.y = w;
 	vertex.z = 0.0;
-//	obsVerts[5] = vertex;
 	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = 0.0;
 	vertex.z = 0.0;
-//	obsVerts[6] = vertex;
 	obsVerts.push_back(vertex);
 
 	vertex.x = l;
 	vertex.y = 0.0;
 	vertex.z = h;
-//	obsVerts[7] = vertex;
 	obsVerts.push_back(vertex);
 	
 }
@@ -692,69 +683,68 @@ void createHexPrism(std::vector<geometry_msgs::Vector3>& obsVerts, double w, dou
 	//Hexagonal Prism
 	//assumes equilateral. width is the hexagon side (eg, 0-1) and length is the prism length (eg 0-6)
 	geometry_msgs::Vector3 vertex;
-	obsVerts.resize(12);
-
+	
 	//side 1
 	vertex.x = 0.0;
 	vertex.y = w/2.0;
 	vertex.z = w*sqrt(3.0);
-	obsVerts[0] = vertex;
-
+	obsVerts.push_back(vertex);
+	
 	vertex.x = 0.0;
 	vertex.y = 0.0;
 	vertex.z = w*sqrt(3.0)/2.0;
-	obsVerts[1] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = 0.0;
 	vertex.y = w/2.0;
 	vertex.z = 0.0;
-	obsVerts[2] = vertex;
+	obsVerts.push_back(vertex);
 
 	vertex.x = 0.0;
 	vertex.y = 3.0*w/2.0;
 	vertex.z = 0.0;
-	obsVerts[3] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = 0.0;
 	vertex.y = w*2.0;
 	vertex.z = w*sqrt(3.0)/2.0;
-	obsVerts[4] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = 0.0;
 	vertex.y = 3.0*w/2.0;
 	vertex.z = w*sqrt(3.0);
-	obsVerts[5] = vertex;
+	obsVerts.push_back(vertex);
 	
 	//side 2
 	vertex.x = l;
 	vertex.y = w/2.0;
 	vertex.z = w*sqrt(3.0);
-	obsVerts[6] = vertex;
+	obsVerts.push_back(vertex);
 
 	vertex.x = l;
 	vertex.y = 0.0;
 	vertex.z = w*sqrt(3.0)/2.0;
-	obsVerts[7] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = w/2.0;
 	vertex.z = 0.0;
-	obsVerts[8] = vertex;
+	obsVerts.push_back(vertex);
 
 	vertex.x = l;
 	vertex.y = 3.0*w/2.0;
 	vertex.z = 0.0;
-	obsVerts[9] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = w*2.0;
 	vertex.z = w*sqrt(3.0)/2.0;
-	obsVerts[10] = vertex;
+	obsVerts.push_back(vertex);
 	
 	vertex.x = l;
 	vertex.y = 3.0*w/2.0;
 	vertex.z = w*sqrt(3.0);
-	obsVerts[11] = vertex;
+	obsVerts.push_back(vertex);
 
 }
 
@@ -1055,7 +1045,7 @@ std::vector<geometry_msgs::Vector3> expandPrism(const std::vector<geometry_msgs:
 }
 //adds real internal obstacle to obs list
 void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle>& full_obs_list){
-	double angleY,angleZ, d, h, w, l;
+	double angleY,angleZ, d, h, w, l, buffer;
 	std::vector<geometry_msgs::Vector3> obsVerts, obsVertsExpanded;
 	geometry_msgs::Vector3 vertex;
 	geometry_msgs::Vector3 trans;
@@ -1083,7 +1073,7 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	//Rectangular Prism
 	h = 0.3937;
 	w = 0.4572;
-	l = 3.0;
+	l = 3.2;
 	angleY = -3.14159/2.0;
 //	angleZ = 0.710909;
 	angleZ = 0.0;
@@ -1105,10 +1095,282 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	
 	buildRectPrism(real_obs_list, obsVerts);
 	
-	obsVertsExpanded = expandPrism(obsVerts, sqrt(2.0)*0.3048);
+	obsVertsExpanded = expandPrism(obsVerts, sqrt(2.0)*0.305);
 	
 	buildRectPrism(full_obs_list, obsVertsExpanded);
-
+	
+	//Hard Coded - rectangular column in middle of room
+	//REAL OBS LIST
+	//facing computers
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	//facing door
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	//facing right
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	//facing left
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	real_obs_list.push_back(newObs);
+	//FULL OBS LIST
+	buffer = 0.308;
+	h = h + buffer;
+	w = w + buffer;
+	//facing computers
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = -1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	//facing door
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 0.0;
+	newObs.normal.y = 1.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	//facing right
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = 1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	//facing left
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = l;
+	newObs.vertices[0] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[1] = vertex;
+	vertex.x = -h/2.0;
+	vertex.y = -w/2.0;
+	vertex.z = 0.0;
+	newObs.vertices[2] = vertex;
+	newObs.normal.x = -1.0;
+	newObs.normal.y = 0.0;
+	newObs.normal.z = 0.0;
+	full_obs_list.push_back(newObs);
+	
+	
 	//Hexagonal Prism
 	/*d = .5;
 	w = d/sqrt(3.0);
@@ -1131,9 +1393,6 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	
 	buildHexPrism(full_obs_list, obsVerts);
 	*/
-	
-	
-
 
 }
 //end Matt Beall
