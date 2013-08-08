@@ -152,6 +152,7 @@ int main(int argc, char** argv) {
     // translated obstacle list
     buildTranslatedObstacles(full_obs_list);
     buildInternalObs(real_obs_list, full_obs_list);
+    //buildFullInternalObs(full_obs_list);
         
 
     double t_min = 2.0;
@@ -1049,7 +1050,8 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	std::vector<geometry_msgs::Vector3> obsVerts, obsVertsExpanded;
 	geometry_msgs::Vector3 vertex;
 	geometry_msgs::Vector3 trans;
-	obstacle newObs;	
+	obstacle newObs;		
+	const double PI = 4.0*atan(1.0);
 	
 	//Triangular Prism
 	/*
@@ -1059,8 +1061,8 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	trans.x = w/2.0;
 	trans.y = 0.0;
 	trans.z = 0.0;
-	angleY = -3.14159/2.0;
-	angleZ = 3.14159/2.0;
+	angleY = -PI/2.0;
+	angleZ = PI/2.0;
 	createTriPrism(obsVerts,w,l);
 	
 	rotY(obsVerts, angleY);
@@ -1071,12 +1073,14 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	*/
 
 	//Rectangular Prism
-	h = 0.3937;
-	w = 0.4572;
+	
+	h = 3.0;
+	w = 1.0;
 	l = 3.2;
-	angleY = -3.14159/2.0;
-//	angleZ = 0.710909;
-	angleZ = 0.0;
+
+	angleY = -PI/2.0;
+	angleZ = PI/4.0;
+	
 	
 	createRectPrism(obsVerts,h,w,l);
 	
@@ -1088,20 +1092,27 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	rotY(obsVerts,angleY);
 	rotZ(obsVerts,angleZ);
 	
-	trans.x = 0.5;
-	trans.y = 0.0;
+	trans.x = 1.2;
+	trans.y = 0.75;
 	trans.z = l/2.0;
 	translate(obsVerts,trans);	
 	
 	buildRectPrism(real_obs_list, obsVerts);
 	
-	obsVertsExpanded = expandPrism(obsVerts, sqrt(2.0)*0.305);
+	obsVertsExpanded = expandPrism(obsVerts, sqrt(2.0)*0.5);
 	
 	buildRectPrism(full_obs_list, obsVertsExpanded);
 	
+
 	//Hard Coded - rectangular column in middle of room
+	/*
 	//REAL OBS LIST
-	//facing computers
+	//h = 0.3937;
+	//w = 0.4572;
+	h = 5.0;
+	w = 1.0;		
+	l = 3.2;	
+	//facing computers	
 	vertex.x = -h/2.0;
 	vertex.y = -w/2.0;
 	vertex.z = l;
@@ -1233,7 +1244,9 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 0.0;
 	real_obs_list.push_back(newObs);
+		
 	//FULL OBS LIST
+		
 	buffer = 0.308;
 	h = h + buffer;
 	w = w + buffer;
@@ -1311,7 +1324,8 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	vertex.x = h/2.0;
 	vertex.y = -w/2.0;
 	vertex.z = 0.0;
-	newObs.vertices[1] = vertex;
+	newObs.vertices
+[1] = vertex;
 	vertex.x = h/2.0;
 	vertex.y = w/2.0;
 	vertex.z = l;
@@ -1369,13 +1383,13 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	newObs.normal.y = 0.0;
 	newObs.normal.z = 0.0;
 	full_obs_list.push_back(newObs);
-	
+	*/
 	
 	//Hexagonal Prism
 	/*d = .5;
 	w = d/sqrt(3.0);
 	l = 2;
-	angleY = -3.14159/2.0;
+	angleY = -PI/2.0;
 	angleZ = 0.0;
 	trans.x = sqrt(3.0)/2.0;
 	trans.y = 0.0;
@@ -1395,6 +1409,7 @@ void buildInternalObs(std::vector<obstacle>& real_obs_list, std::vector<obstacle
 	*/
 
 }
+
 //end Matt Beall
 
 
